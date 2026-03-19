@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Footer from "../components/Footer";
 
 export default function Landing() {
   return (
@@ -888,6 +889,81 @@ export default function Landing() {
             </div>
           </div>
         </section>
+
+
+        {/* SECTION: VALUE + TECH STACK */}
+        <section className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-10 lg:py-28">
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_35%)]" />
+
+          {/* VALUE POINTS */}
+          <div className="mx-auto max-w-4xl">
+          <div className="grid gap-10 md:grid-cols-3 md:gap-10 lg:gap-12">
+              <div className="rounded-[28px] border border-cyan-500/10 bg-[#07162f]/75 p-8 text-center shadow-[0_12px_40px_rgba(0,0,0,0.22)] backdrop-blur">
+                <h3 className="text-3xl font-extrabold leading-tight text-cyan-400 sm:text-[2rem]">
+                  Direct + Transitive
+                </h3>
+                <p className="mt-5 text-base leading-8 text-slate-400 sm:text-lg">
+                  We don’t just scan your package.json. We scan the packages your
+                  packages use, all the way down.
+                </p>
+              </div>
+
+              <div className="rounded-[28px] border border-cyan-500/10 bg-[#07162f]/75 p-8 text-center shadow-[0_12px_40px_rgba(0,0,0,0.22)] backdrop-blur">
+                <h3 className="text-3xl font-extrabold leading-tight text-cyan-400 sm:text-[2rem]">
+                  Real-time + Scheduled
+                </h3>
+                <p className="mt-5 text-base leading-8 text-slate-400 sm:text-lg">
+                  Continuous monitoring through CI/CD integration combined with
+                  daily full-stack re-scans.
+                </p>
+              </div>
+
+              <div className="rounded-[28px] border border-cyan-500/10 bg-[#07162f]/75 p-8 text-center shadow-[0_12px_40px_rgba(0,0,0,0.22)] backdrop-blur">
+                <h3 className="text-3xl font-extrabold leading-tight text-cyan-400 sm:text-[2rem]">
+                  Full Ecosystem
+                </h3>
+                <p className="mt-5 text-base leading-8 text-slate-400 sm:text-lg">
+                  Support for npm, PyPI, Maven, Go Modules, and Docker images in a
+                  single unified view.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* DIVIDER + LABEL */}
+          <div className="mx-auto mt-20 max-w-5xl">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
+              <span className="relative bg-[#020817] px-5 text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">
+                Powering Global Security Teams
+              </span>
+            </div>
+          </div>
+
+        <div className="mx-auto mt-10 max-w-6xl overflow-x-auto">
+  <div className="flex min-w-max items-center justify-center gap-4 sm:gap-5">
+    {[
+      "React",
+      "Node.js",
+      "TigerGraph",
+      "GitHub API",
+      "NVD Database",
+      "OpenAI / LLM",
+    ].map((tech) => (
+      <span
+        key={tech}
+        className="whitespace-nowrap rounded-full border border-cyan-500/15 bg-[#0a1d3b]/90 px-6 py-3 text-base font-semibold text-slate-200 shadow-[0_8px_24px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:border-cyan-400/35 hover:bg-[#0d2448] hover:text-white sm:px-7 sm:py-3.5 sm:text-lg"
+      >
+        {tech}
+      </span>
+    ))}
+  </div>
+</div>
+
+        </section>
+
+
+<Footer/>
 
       </main>
     </div>
