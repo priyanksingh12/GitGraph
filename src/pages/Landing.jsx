@@ -297,23 +297,598 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* SECTION: HOW IT WORKS PLACEHOLDER */}
+              {/* SECTION: HOW IT WORKS */}
         <section
           id="how-it-works"
-          className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-10"
+          className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24"
         >
-          <div className="rounded-3xl border border-dashed border-cyan-500/20 bg-slate-900/30 p-8 text-center">
-            <p className="text-sm uppercase tracking-[0.25em] text-cyan-400">
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="text-4xl font-extrabold text-white sm:text-5xl">
               How It Works
-            </p>
-            <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
-              Add your next section here
             </h2>
-            <p className="mt-3 text-slate-400">
-              Send me the content for this section and I’ll match the same style.
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-400 sm:text-xl">
+              Our multi-stage analysis engine maps your entire ecosystem in seconds.
             </p>
           </div>
+
+          <div className="mt-14 grid grid-cols-2 gap-y-10 sm:mt-16 sm:gap-x-8 sm:gap-y-12 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-14">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-cyan-500/30 bg-slate-900/60 shadow-[0_0_30px_rgba(34,211,238,0.08)] sm:h-24 sm:w-24">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-8 w-8 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10 14L14 10"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M7.5 16.5L5.5 18.5C4.4 19.6 2.6 19.6 1.5 18.5C0.4 17.4 0.4 15.6 1.5 14.5L3.5 12.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M16.5 7.5L18.5 5.5C19.6 4.4 21.4 4.4 22.5 5.5C23.6 6.6 23.6 8.4 22.5 9.5L20.5 11.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-2xl font-bold text-cyan-400">01. URL</h3>
+              <p className="mt-2 text-base text-slate-500">Enter Repo URL</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-cyan-500/30 bg-slate-900/60 shadow-[0_0_30px_rgba(34,211,238,0.08)] sm:h-24 sm:w-24">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-8 w-8 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 7L12 3L16 7"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8 17L12 21L16 17"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-2xl font-bold text-cyan-400">02. Extract</h3>
+              <p className="mt-2 text-base text-slate-500">Parse Manifests</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-cyan-500/30 bg-slate-900/60 shadow-[0_0_30px_rgba(34,211,238,0.08)] sm:h-24 sm:w-24">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-8 w-8 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.8" />
+                  <path
+                    d="M14 14L20 20"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M6 18H12"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M9 15V21"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-2xl font-bold text-cyan-400">03. Detect</h3>
+              <p className="mt-2 text-base text-slate-500">Scan CVE Database</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-cyan-500/30 bg-slate-900/60 shadow-[0_0_30px_rgba(34,211,238,0.08)] sm:h-24 sm:w-24">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-8 w-8 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="12" cy="12" r="2" fill="currentColor" />
+                  <circle cx="12" cy="4.5" r="2" fill="currentColor" />
+                  <circle cx="12" cy="19.5" r="2" fill="currentColor" />
+                  <circle cx="4.5" cy="12" r="2" fill="currentColor" />
+                  <circle cx="19.5" cy="12" r="2" fill="currentColor" />
+                  <circle cx="6.8" cy="6.8" r="2" fill="currentColor" />
+                  <circle cx="17.2" cy="6.8" r="2" fill="currentColor" />
+                  <circle cx="6.8" cy="17.2" r="2" fill="currentColor" />
+                  <circle cx="17.2" cy="17.2" r="2" fill="currentColor" />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-2xl font-bold text-cyan-400">04. Build</h3>
+              <p className="mt-2 text-base text-slate-500">Dependency Graph</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-cyan-500/30 bg-slate-900/60 shadow-[0_0_30px_rgba(34,211,238,0.08)] sm:h-24 sm:w-24">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-8 w-8 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M4 16L8 12L11 15L16 8L20 12"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M16 8H19V11"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="18.5" cy="18.5" r="3" stroke="currentColor" strokeWidth="1.8" />
+                  <path
+                    d="M20.5 20.5L22 22"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-2xl font-bold text-cyan-400">05. Score</h3>
+              <p className="mt-2 text-base text-slate-500">Calculate Risk</p>
+            </div>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-cyan-500/30 bg-slate-900/60 shadow-[0_0_30px_rgba(34,211,238,0.08)] sm:h-24 sm:w-24">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-8 w-8 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 3L19 7V12C19 16.2 16.3 19.9 12 21C7.7 19.9 5 16.2 5 12V7L12 3Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="12" cy="12" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-2xl font-bold text-cyan-400">06. AI Insights</h3>
+              <p className="mt-2 text-base text-slate-500">Remediation Plan</p>
+            </div>
+          </div>
         </section>
+
+
+        {/* SECTION: ENTERPRISE-GRADE SECURITY */}
+        <section className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="text-4xl font-extrabold leading-tight text-white sm:text-5xl">
+              Enterprise-Grade
+              <br />
+              Security
+            </h2>
+          </div>
+
+          <div className="mt-12 grid gap-5 sm:mt-14 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-3xl border border-cyan-500/10 bg-[#07162f]/90 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect x="4" y="4" width="6" height="6" rx="1.2" fill="currentColor" />
+                  <rect x="14" y="4" width="6" height="6" rx="1.2" fill="currentColor" opacity="0.9" />
+                  <rect x="14" y="14" width="6" height="6" rx="1.2" fill="currentColor" opacity="0.9" />
+                  <path
+                    d="M10 7H14M17 10V14M10 17H14"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold text-white">Graph Visualization</h3>
+              <p className="mt-3 text-base leading-7 text-slate-400">
+                Visualize complex many-to-many relationships across your dependency tree.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-cyan-500/10 bg-[#07162f]/90 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 3L18.5 5.8V10.4C18.5 14.6 15.8 18.2 12 19.5C8.2 18.2 5.5 14.6 5.5 10.4V5.8L12 3Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M12 8V11.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="12" cy="14.5" r="1" fill="currentColor" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold text-white">CVE Detection</h3>
+              <p className="mt-3 text-base leading-7 text-slate-400">
+                Instant mapping of dependencies to known CVEs with real-time updates.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-cyan-500/10 bg-[#07162f]/90 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M5 16L10 11L13 14L19 8"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M15 8H19V12"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4.5 6.5L7 9"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M7 6.5L4.5 9"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold text-white">AI Fixes</h3>
+              <p className="mt-3 text-base leading-7 text-slate-400">
+                Automatically generated PRs to patch vulnerabilities with minimal breaking changes.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-cyan-500/10 bg-[#07162f]/90 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="8" cy="12" r="2.3" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="16" cy="7.5" r="2.3" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="16" cy="16.5" r="2.3" stroke="currentColor" strokeWidth="1.8" />
+                  <path
+                    d="M10.1 10.9L13.8 8.6M10.1 13.1L13.8 15.4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold text-white">Webhook Monitoring</h3>
+              <p className="mt-3 text-base leading-7 text-slate-400">
+                Monitor every push and pull request for new dependency risks.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-cyan-500/10 bg-[#07162f]/90 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.8" />
+                  <path
+                    d="M12 8V12L14.8 14.3"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold text-white">Scheduled Scanning</h3>
+              <p className="mt-3 text-base leading-7 text-slate-400">
+                Continuous background scanning for newly discovered zero-day exploits.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-cyan-500/10 bg-[#07162f]/90 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                  <path
+                    d="M8 10H10M8 14H10M14 10H16M14 14H16"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold text-white">Risk Scoring</h3>
+              <p className="mt-3 text-base leading-7 text-slate-400">
+                A proprietary 1–100 score based on reachability and exploitability.
+              </p>
+            </div>
+          </div>
+        </section>
+
+                {/* SECTION: DASHBOARD PREVIEW */}
+        <section className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
+              Dashboard Preview
+            </p>
+            <h2 className="mt-3 text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
+              See Your Repository Risk
+              <br />
+              in One Unified Dashboard
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-400">
+              Explore dependency relationships, identify vulnerable packages, and
+              prioritize risk with a web dashboard built for fast decisions.
+            </p>
+          </div>
+
+          <div className="mt-12 sm:mt-14">
+            <div className="overflow-hidden rounded-[28px] border border-cyan-500/20 bg-[#07152f]/95 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+              {/* TOP BAR */}
+              <div className="flex items-center justify-between border-b border-cyan-500/10 bg-[#081a36] px-4 py-4 sm:px-6">
+                <div className="flex items-center gap-3">
+                  <span className="h-3 w-3 rounded-full bg-red-400" />
+                  <span className="h-3 w-3 rounded-full bg-yellow-400" />
+                  <span className="h-3 w-3 rounded-full bg-green-400" />
+                  <div className="ml-3 hidden rounded-lg bg-[#0d2347] px-3 py-1.5 text-xs text-slate-400 sm:block">
+                    dashboard.gitgraph.ai
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-red-500/15 px-3 py-2 text-[10px] font-bold uppercase leading-4 text-red-300 sm:px-4 sm:text-xs">
+                  Critical Risk: 84
+                </div>
+              </div>
+
+              {/* CONTENT */}
+              <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1.5fr_0.9fr] lg:p-8">
+                {/* LEFT SIDE */}
+                <div className="rounded-3xl border border-cyan-500/10 bg-[#081a36] p-4 sm:p-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                        Dependency Map
+                      </p>
+                      <h3 className="mt-2 text-2xl font-bold text-white">
+                        Main Repository Graph
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-400">
+                        Repo: gitgraph-engine
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#10244a] text-slate-300">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle cx="11" cy="11" r="4.5" stroke="currentColor" strokeWidth="1.8" />
+                          <path
+                            d="M16 16L20 20"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+
+                      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#10244a] text-slate-300">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M12 5V19"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M5 12H19"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 overflow-hidden rounded-2xl border border-cyan-500/10 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.12),transparent_55%),linear-gradient(180deg,#0b1a34_0%,#09142b_100%)] p-4 sm:p-6">
+                    <svg
+                      viewBox="0 0 620 360"
+                      className="h-auto w-full"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <line x1="70" y1="220" x2="150" y2="180" stroke="#94a3b8" strokeOpacity="0.28" />
+                      <line x1="150" y1="180" x2="230" y2="120" stroke="#94a3b8" strokeOpacity="0.28" />
+                      <line x1="230" y1="120" x2="320" y2="160" stroke="#94a3b8" strokeOpacity="0.28" />
+                      <line x1="320" y1="160" x2="420" y2="110" stroke="#94a3b8" strokeOpacity="0.28" />
+                      <line x1="420" y1="110" x2="520" y2="170" stroke="#94a3b8" strokeOpacity="0.28" />
+                      <line x1="120" y1="270" x2="190" y2="220" stroke="#94a3b8" strokeOpacity="0.25" />
+                      <line x1="190" y1="220" x2="290" y2="240" stroke="#94a3b8" strokeOpacity="0.25" />
+                      <line x1="290" y1="240" x2="390" y2="210" stroke="#94a3b8" strokeOpacity="0.25" />
+                      <line x1="390" y1="210" x2="500" y2="250" stroke="#94a3b8" strokeOpacity="0.25" />
+                      <line x1="150" y1="180" x2="190" y2="220" stroke="#94a3b8" strokeOpacity="0.22" />
+                      <line x1="230" y1="120" x2="290" y2="240" stroke="#94a3b8" strokeOpacity="0.22" />
+                      <line x1="320" y1="160" x2="390" y2="210" stroke="#94a3b8" strokeOpacity="0.22" />
+                      <line x1="420" y1="110" x2="500" y2="250" stroke="#94a3b8" strokeOpacity="0.22" />
+                      <line x1="230" y1="120" x2="420" y2="110" stroke="#94a3b8" strokeOpacity="0.18" />
+                      <line x1="190" y1="220" x2="390" y2="210" stroke="#94a3b8" strokeOpacity="0.18" />
+                      <line x1="70" y1="220" x2="120" y2="270" stroke="#94a3b8" strokeOpacity="0.18" />
+                      <line x1="500" y1="250" x2="560" y2="210" stroke="#94a3b8" strokeOpacity="0.18" />
+
+                      <circle cx="70" cy="220" r="7" fill="#cbd5e1" fillOpacity="0.7" />
+                      <circle cx="120" cy="270" r="7" fill="#cbd5e1" fillOpacity="0.55" />
+                      <circle cx="150" cy="180" r="8" fill="#d6a36f" />
+                      <circle cx="190" cy="220" r="7" fill="#cbd5e1" fillOpacity="0.7" />
+                      <circle cx="230" cy="120" r="8" fill="#cbd5e1" fillOpacity="0.7" />
+                      <circle cx="290" cy="240" r="8" fill="#cbd5e1" fillOpacity="0.6" />
+                      <circle cx="320" cy="160" r="8" fill="#cbd5e1" fillOpacity="0.65" />
+                      <circle cx="390" cy="210" r="8" fill="#d6a36f" />
+                      <circle cx="420" cy="110" r="8" fill="#cbd5e1" fillOpacity="0.65" />
+                      <circle cx="500" cy="250" r="8" fill="#cbd5e1" fillOpacity="0.6" />
+                      <circle cx="520" cy="170" r="7" fill="#cbd5e1" fillOpacity="0.5" />
+                      <circle cx="560" cy="210" r="7" fill="#cbd5e1" fillOpacity="0.45" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* RIGHT SIDE */}
+                <div className="space-y-4">
+                  <div className="rounded-3xl border border-cyan-500/10 bg-[#081a36] p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                      Recent Vulnerabilities
+                    </p>
+
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-2xl border border-red-400 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h4 className="text-sm font-bold text-white">lodash</h4>
+                            <p className="mt-1 text-[11px] text-slate-400">
+                              CVE-2023-1234: Prototype Pollution
+                            </p>
+                          </div>
+                          <span className="rounded-md bg-red-500 px-2 py-1 text-[9px] font-bold uppercase text-white">
+                            Critical
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-orange-400 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h4 className="text-sm font-bold text-white">axios</h4>
+                            <p className="mt-1 text-[11px] text-slate-400">
+                              CVE-2023-5678: SSRF Vulnerability
+                            </p>
+                          </div>
+                          <span className="rounded-md bg-orange-500 px-2 py-1 text-[9px] font-bold uppercase text-white">
+                            High
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-yellow-400 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h4 className="text-sm font-bold text-white">express</h4>
+                            <p className="mt-1 text-[11px] text-slate-400">
+                              CVE-2022-9998: ReDoS in router
+                            </p>
+                          </div>
+                          <span className="rounded-md bg-yellow-400 px-2 py-1 text-[9px] font-bold uppercase text-slate-950">
+                            Medium
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-cyan-400 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h4 className="text-sm font-bold text-white">moment</h4>
+                            <p className="mt-1 text-[11px] text-slate-400">
+                              Deprecated: Use date-fns instead
+                            </p>
+                          </div>
+                          <span className="rounded-md bg-cyan-400 px-2 py-1 text-[9px] font-bold uppercase text-slate-950">
+                            Low
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button className="mt-5 w-full rounded-xl bg-cyan-500/15 px-4 py-3 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/20">
+                      View Full Report
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-red-500/10 bg-[#081a36] p-4">
+                      <p className="text-xs text-slate-500">Critical Packages</p>
+                      <p className="mt-2 text-3xl font-bold text-white">12</p>
+                    </div>
+                    <div className="rounded-2xl border border-cyan-500/10 bg-[#081a36] p-4">
+                      <p className="text-xs text-slate-500">Health Score</p>
+                      <p className="mt-2 text-3xl font-bold text-white">84%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
     </div>
   );
