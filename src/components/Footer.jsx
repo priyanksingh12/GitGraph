@@ -131,7 +131,7 @@ const Footer = () => {
 
          <div className="mt-6 flex justify-end gap-5 pr-4">
   <a
-    href="https://instagram.com/freelanzo"
+    href="https://instagram.com/GitGraph"
     target="_blank"
     rel="noreferrer"
     className="flex h-14 w-14 items-center justify-center rounded-full border border-cyan-500/15 bg-[#081a36] text-cyan-400 text-2xl transition hover:border-cyan-400/40 hover:text-cyan-300"

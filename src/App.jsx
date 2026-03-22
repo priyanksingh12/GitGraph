@@ -3,6 +3,10 @@ import Landing from "./pages/Landing";
 import About from "./pages/About";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Dashboard from "./pages/DashBoard";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthSuccess from "./pages/AuthSuccess";
 
 function App() {
   return (
@@ -11,6 +15,16 @@ function App() {
       <Route path="/about" element={<About />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+    
+      <Route path="/auth/success" element={<AuthSuccess />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
