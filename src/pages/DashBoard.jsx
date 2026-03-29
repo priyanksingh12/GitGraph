@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { FaGithub } from "react-icons/fa";
+import RepoAnalysisChart from "../components/RepoAnalysisChart";
 
 import {
   getCurrentUser,
@@ -9,13 +12,15 @@ import {
   getDashboard,
 } from "../api";
 
+import API from "../api";
+
 // ✅ Components
 import StatsCard from "../components/StatsCard";
 import HealthBar from "../components/HealthBar";
-import SeverityChart from "../components/SeverityChart";
+import { getGraphData } from "../api";
 import AIChat from "../components/AIChat";
 import ReportButton from "../components/ReportButton";
-import Comparison from "../components/Comparison";
+
 
 /* ================= SOCKET (FIXED) ================= */
 let socket;
@@ -27,6 +32,7 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [repos, setRepos] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
+  const [topVulns, setTopVulns] = useState([]);
   const [selectedRepoId, setSelectedRepoId] = useState(urlRepoId || null);
 
   const [loading, setLoading] = useState(true);
@@ -56,12 +62,16 @@ const Dashboard = () => {
   }, []);
 
   /* ================= URL LOAD ================= */
-  useEffect(() => {
-    if (urlRepoId && urlRepoId !== selectedRepoId) {
-      setSelectedRepoId(urlRepoId);
-      listenForScan(urlRepoId);
-    }
-  }, [urlRepoId]);
+ useEffect(() => {
+  if (urlRepoId) {
+    console.log("🔥 Loading repo from URL:", urlRepoId);
+
+    setSelectedRepoId(urlRepoId);
+    listenForScan(urlRepoId);
+
+    fetchTopVulnerabilities(urlRepoId);
+  }
+}, [urlRepoId]);
 
   /* ================= AUTO FETCH REPOS ================= */
   useEffect(() => {
@@ -109,6 +119,18 @@ const Dashboard = () => {
       console.log("❌ Repo fetch failed:", err.response?.data || err.message);
     }
   };
+
+  const fetchTopVulnerabilities = async (repoId) => {
+  try {
+    const res = await API.get(`/api/vulnerabilities/${repoId}`);
+
+    const vulns = res.data.vulnerabilities || res.data || [];
+
+    setTopVulns(vulns.slice(0, 3)); // 🔥 only top 3
+  } catch (err) {
+    console.log("Top vuln error:", err);
+  }
+};
 
   /* ================= SCAN ================= */
   const listenForScan = (repoId) => {
@@ -208,37 +230,98 @@ const Dashboard = () => {
     return <div className="text-white p-10">Loading...</div>;
 
   // CONNECT GITHUB
-  if (!user?.githubUsername)
-    return (
-      <div className="text-white p-10">
-        <button
+
+ if (!user?.githubUsername)
+  return (
+    <div className="min-h-screen bg-[#020817] flex items-center justify-center text-white px-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 40 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-xl w-full bg-[#07162f] rounded-3xl p-10 text-center shadow-2xl border border-cyan-500/10"
+      >
+        {/* ICON */}
+        <motion.div
+          animate={{ rotate: [0, 10, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 3 }}
+          className="flex justify-center mb-4"
+        >
+          <FaGithub className="text-6xl text-cyan-400" />
+        </motion.div>
+
+        <h1 className="text-3xl font-bold mb-3">
+          Connect your GitHub
+        </h1>
+
+        <p className="text-gray-400 mb-6">
+          Securely link your GitHub account to start analyzing repositories,
+          detect vulnerabilities, and generate AI insights.
+        </p>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
             window.location.href =
               `${import.meta.env.VITE_API_BASE_URL}/api/auth/github`;
           }}
-          className="bg-cyan-400 text-black px-4 py-2 rounded"
+          className="bg-cyan-400 hover:bg-cyan-300 text-black font-semibold px-6 py-3 rounded-xl transition w-full flex items-center justify-center gap-2"
         >
+          <FaGithub />
           Connect GitHub
-        </button>
-      </div>
-    );
+        </motion.button>
+
+        <p className="text-xs text-gray-500 mt-4">
+          OAuth powered • Secure connection
+        </p>
+      </motion.div>
+    </div>
+  );
 
   // INSTALL APP
+  
   if (!user?.installationId)
-    return (
-      <div className="text-white p-10 flex flex-col items-center gap-4">
-        <h1 className="text-xl font-semibold">
-          Install GitHub App to Continue
+  return (
+    <div className="min-h-screen bg-[#020817] flex items-center justify-center text-white px-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 40 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-xl w-full bg-[#07162f] rounded-3xl p-10 text-center shadow-2xl border border-yellow-500/10"
+      >
+        {/* ICON */}
+        <motion.div
+          animate={{ rotate: [0, 8, -8, 0] }}
+          transition={{ repeat: Infinity, duration: 3 }}
+          className="flex justify-center mb-4"
+        >
+          <FaGithub className="text-6xl text-yellow-400" />
+        </motion.div>
+
+        <h1 className="text-3xl font-bold mb-3">
+          Install GitHub App
         </h1>
 
-        <a
+        <p className="text-gray-400 mb-6">
+          Install our GitHub App to allow secure access to your repositories
+          for dependency analysis and vulnerability detection.
+        </p>
+
+        <motion.a
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           href="https://github.com/apps/GraphGuardians/installations/new"
-          className="bg-yellow-400 text-black px-4 py-2 rounded"
+          className="block bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-6 py-3 rounded-xl transition w-full"
         >
-          Install GitHub App
-        </a>
-      </div>
-    );
+          ⚡ Install App on GitHub
+        </motion.a>
+
+        <p className="text-xs text-gray-500 mt-4">
+          Choose repositories you want to analyze
+        </p>
+      </motion.div>
+    </div>
+  );
 
   // FETCH REPOS
   if (!reposLoaded && !selectedRepoId)
@@ -281,12 +364,88 @@ const Dashboard = () => {
 
   // ANALYZING
   if (isAnalyzing)
-    return (
-      <div className="text-white flex flex-col justify-center items-center h-screen">
-        <div className="animate-spin h-12 w-12 border-b-2 border-cyan-400 mb-4"></div>
-        <h1 className="text-xl">Analyzing Repository...</h1>
+  return (
+    <div className="min-h-screen bg-[#020817] text-white flex flex-col items-center justify-center px-6">
+
+      {/* 🔷 Animated Diamond */}
+      <motion.div
+        animate={{ rotate: [0, 45, 0] }}
+        transition={{ repeat: Infinity, duration: 3 }}
+        className="relative mb-10"
+      >
+        <div className="w-40 h-40 border border-cyan-400/20 rotate-45 rounded-xl flex items-center justify-center">
+          <div className="w-16 h-16 bg-[#07162f] rounded-lg flex items-center justify-center text-cyan-400">
+            ⏳
+          </div>
+        </div>
+
+        {/* glow */}
+        <div className="absolute inset-0 bg-cyan-400/10 blur-2xl rounded-full"></div>
+      </motion.div>
+
+      {/* TITLE */}
+      <h1 className="text-2xl font-bold mb-2 text-center">
+        Analyzing Repository...
+      </h1>
+
+      <p className="text-gray-400 mb-6 text-center max-w-md">
+        Extracting dependency graph and scanning for vulnerabilities...
+      </p>
+
+      {/* 🔥 DYNAMIC PROGRESS BAR */}
+      <div className="w-full max-w-md bg-[#07162f] rounded-full h-3 overflow-hidden mb-6">
+        <motion.div
+          className="h-full bg-gradient-to-r from-cyan-400 to-blue-500"
+          initial={{ width: "0%" }}
+          animate={{ width: ["20%", "50%", "80%", "100%"] }}
+          transition={{ duration: 6, repeat: Infinity }}
+        />
       </div>
-    );
+
+      {/* 🔍 LIVE LOGS */}
+      <div className="bg-[#07162f] p-4 rounded-xl w-full max-w-md text-xs text-gray-300 font-mono space-y-2 border border-cyan-400/10">
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1] }}
+          transition={{ delay: 0.2 }}
+        >
+          [0.82s] Fetching manifest files...
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1] }}
+          transition={{ delay: 0.8 }}
+        >
+          [1.45s] Resolving transitive dependencies...
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1] }}
+          transition={{ delay: 1.4 }}
+          className="text-cyan-400"
+        >
+          [2.13s] Mapping nodes: 1,248 identified
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1] }}
+          transition={{ delay: 2 }}
+          className="text-yellow-400"
+        >
+          [RUNNING] Scanning vulnerabilities...
+        </motion.p>
+      </div>
+
+      {/* FOOTER */}
+      <div className="mt-8 text-xs text-gray-500">
+        SENTINEL INTELLIGENCE NODE • US-EAST-ALPHA
+      </div>
+    </div>
+  );
 
   if (!dashboardData)
     return <div className="text-white p-10">Loading dashboard...</div>;
@@ -325,40 +484,85 @@ const Dashboard = () => {
         <HealthBar value={health} />
       </div>
 
-      {/* CHART + ALERT */}
-      <div className="grid md:grid-cols-2 gap-6 mt-6">
-        <SeverityChart repoId={selectedRepoId} />
+     {/* COMPARISON + CHART BLOCK */}
+<div className="grid md:grid-cols-2 gap-6 mt-6">
 
-        <div className="bg-[#07162f] p-6 rounded-xl">
-          <h2 className="text-lg mb-2">🚨 Alerts</h2>
-          <p className="text-red-400 font-semibold">
-            {dashboardData.vulnerabilities} vulnerabilities detected
-          </p>
+ 
+{/* LEFT → TOP VULNERABILITIES */}
+<div className="bg-[#07162f] p-6 rounded-xl flex flex-col justify-between">
+
+  <div>
+    <h2 className="text-xl font-semibold mb-4">⚠ Top Vulnerabilities</h2>
+
+    <div className="space-y-3">
+      {topVulns.map((v, i) => (
+        <div
+          key={i}
+          className="flex justify-between items-center text-sm border-b border-gray-700 pb-2"
+        >
+          <div>
+            <p className="font-semibold">{v.package}</p>
+            <p className="text-gray-400 text-xs truncate max-w-[200px]">
+              {v.fix}
+            </p>
+          </div>
+
+          <span
+            className={`text-xs font-bold ${
+              v.severity === "HIGH"
+                ? "text-red-400"
+                : v.severity === "MEDIUM"
+                ? "text-yellow-400"
+                : "text-green-400"
+            }`}
+          >
+            {v.severity}
+          </span>
         </div>
-      </div>
+      ))}
+    </div>
+  </div>
+
+  <button
+    onClick={() => navigate(`/vulnerabilities/${selectedRepoId}`)}
+    className="mt-4 bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-300 transition"
+  >
+    ⚠ View Vulnerabilities
+  </button>
+</div>
+
+
+  {/* RIGHT → PIE CHART */}
+
+
+ {/* RIGHT → ANALYSIS CHART */}
+<div className="bg-[#07162f] p-6 rounded-xl">
+  <h2 className="text-xl font-semibold mb-4">📈 Repo Analysis</h2>
+
+  <RepoAnalysisChart repoId={selectedRepoId} />
+</div>
+
+</div>
+
 
       {/* ACTIONS */}
       <div className="flex flex-wrap gap-4 mt-6">
-        <button
-          onClick={() => navigate(`/graph/${selectedRepoId}`)}
-          className="bg-cyan-400 text-black px-4 py-2 rounded"
-        >
-          🌳 Graph
-        </button>
+
+       
 
         <button
           onClick={() => navigate(`/chain/${selectedRepoId}`)}
           className="bg-red-500 text-white px-4 py-2 rounded"
         >
-          💀 Chain Graph
+           Chain Graph
         </button>
 
-        <button
-          onClick={() => navigate(`/vulnerabilities/${selectedRepoId}`)}
-          className="bg-yellow-400 text-black px-4 py-2 rounded"
-        >
-          ⚠️ Vulnerabilities
-        </button>
+       <button
+  onClick={() => navigate(`/comparison/${selectedRepoId}`)}
+  className="bg-blue-400 text-black px-4 py-2 rounded"
+>
+   View Comparison
+</button>
 
         <button
           onClick={handleRescan}
@@ -368,10 +572,18 @@ const Dashboard = () => {
         </button>
 
         <ReportButton repoId={selectedRepoId} />
+
+
       </div>
 
-      {/* COMPARISON */}
-     <Comparison repoId={selectedRepoId} />
+       <div className="bg-[#07162f] p-6 rounded-xl">
+          <h2 className="text-lg mb-2">🚨 Alerts</h2>
+          <p className="text-red-400 font-semibold">
+            {dashboardData.vulnerabilities} vulnerabilities detected
+          </p>
+        </div>
+
+      
 
       {/* AI */}
       <div className="mt-6 bg-[#07162f] p-6 rounded-xl">

@@ -76,4 +76,10 @@ export const addRepo = (data) =>
 export const getDashboard = (repoId) =>
   API.get(`/api/dashboard/${repoId}`);
 
+// =========================
+// 🌐 Graph
+// =========================
+export const getGraphData = (repoId) =>
+  API.get(`/api/graph/${repoId}`);
+
 export default API;

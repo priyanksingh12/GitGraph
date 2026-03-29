@@ -1,48 +1,69 @@
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer
+} from "recharts";
+
 import { useEffect, useState } from "react";
 import API from "../api";
 
-const Comparison = ({ repoId }) => {
-  const [data, setData] = useState(null);
+const ComparisonChart = ({ repoId }) => {
+  const [data, setData] = useState([]);
 
   useEffect(() => {
-    fetchComparison();
+    if (repoId) fetchHistory();
   }, [repoId]);
 
-  const fetchComparison = async () => {
+  const fetchHistory = async () => {
     try {
-      const res = await API.get(`/api/repos/${repoId}/diff`);
-      setData(res.data);
+      const res = await API.get(`/api/repos/${repoId}/history`);
+
+      const historyArray = res.data.history || res.data || [];
+
+      const formatted = historyArray.map((h) => ({
+        version: `v${h.version}`,
+        vulnerabilities: h.vulnerabilityCount,
+        risk: h.riskScore
+      }));
+
+      setData(formatted);
     } catch (err) {
-      console.log("Comparison error:", err.message);
+      console.log(err);
     }
   };
 
-  if (!data)
-    return (
-      <div className="bg-[#07162f] p-6 rounded-xl mt-6">
-        No comparison data
-      </div>
-    );
+  if (!data.length) {
+    return <p className="text-gray-400">No history yet</p>;
+  }
 
   return (
-    <div className="bg-[#07162f] p-6 rounded-xl mt-6">
-      <h2 className="text-xl mb-4">📈 Version Comparison</h2>
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="version" />
+        <YAxis />
+        <Tooltip />
 
-      <div className="flex gap-6">
-        <div className="text-red-400">
-          ❌ New: {data.newVulnerabilities}
-        </div>
+        <Line
+          type="monotone"
+          dataKey="risk"
+          stroke="#22d3ee"
+          strokeWidth={3}
+        />
 
-        <div className="text-green-400">
-          ✅ Fixed: {data.fixedVulnerabilities}
-        </div>
-
-        <div>
-          Trend: {data.trend === "up" ? "📈" : "📉"}
-        </div>
-      </div>
-    </div>
+        <Line
+          type="monotone"
+          dataKey="vulnerabilities"
+          stroke="#f87171"
+          strokeWidth={3}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   );
 };
 
-export default Comparison;
+export default ComparisonChart;

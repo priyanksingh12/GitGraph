@@ -8,12 +8,13 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/DashBoard";
 import GraphPage from "./pages/GraphPage";
 import ChainGraph from "./pages/ChainGraph";
-import Graph3D from "./pages/Graph3D"; // 🌌 NEW
+
 import Vulnerabilities from "./pages/Vulnerabilities";
 import AuthSuccess from "./pages/AuthSuccess";
 
 // ================= COMPONENTS =================
 import ProtectedRoute from "./components/ProtectedRoute";
+import ComparisonPage from "./pages/ComparisonPage";
 
 function App() {
   return (
@@ -67,15 +68,7 @@ function App() {
         }
       />
 
-      {/* 🌌 3D GRAPH (🔥 USP) */}
-      <Route
-        path="/graph3d/:repoId"
-        element={
-          <ProtectedRoute>
-            <Graph3D />
-          </ProtectedRoute>
-        }
-      />
+     
 
       {/* ⚠️ VULNERABILITIES */}
       <Route
@@ -88,16 +81,14 @@ function App() {
       />
 
       {/* 📊 COMPARISON */}
-      <Route
-        path="/comparison/:repoId"
-        element={
-          <ProtectedRoute>
-            <div className="min-h-screen flex items-center justify-center bg-[#020817] text-white text-xl">
-              📊 Comparison Coming Soon
-            </div>
-          </ProtectedRoute>
-        }
-      />
+  <Route
+  path="/comparison/:repoId"
+  element={
+    <ProtectedRoute>
+      <ComparisonPage />
+    </ProtectedRoute>
+  }
+/>
 
       {/* 🤖 AI SUGGESTIONS */}
       <Route
