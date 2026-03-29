@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams,useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaGithub } from "react-icons/fa";
 import RepoAnalysisChart from "../components/RepoAnalysisChart";
-
+import SeverityBarGraph from "../components/SeverityBarGraph";
 import {
   getCurrentUser,
   getGithubRepos,
@@ -38,9 +38,14 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [reposLoaded, setReposLoaded] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+const [allVulns, setAllVulns] = useState([]);
 
   const intervalRef = useRef(null);
   const currentVersionRef = useRef(null);
+
+const location = useLocation();
+
+       const redirectUrl = `${window.location.origin}/dashboard`;
 
   /* ================= INIT ================= */
   useEffect(() => {
@@ -86,6 +91,15 @@ const Dashboard = () => {
     }
   }, [user]);
 
+
+  useEffect(() => {
+  // When user comes back from GitHub install
+  if (location.search.includes("installation_id")) {
+    console.log("🔥 Detected installation, refreshing user...");
+    fetchUser(); // 🔥 re-fetch user so installationId updates
+  }
+}, [location]);
+
   /* ================= USER ================= */
   const fetchUser = async () => {
     try {
@@ -120,13 +134,14 @@ const Dashboard = () => {
     }
   };
 
-  const fetchTopVulnerabilities = async (repoId) => {
+ const fetchTopVulnerabilities = async (repoId) => {
   try {
     const res = await API.get(`/api/vulnerabilities/${repoId}`);
 
     const vulns = res.data.vulnerabilities || res.data || [];
 
-    setTopVulns(vulns.slice(0, 3)); // 🔥 only top 3
+    setTopVulns(vulns.slice(0, 3)); // existing
+    setAllVulns(vulns); // 🔥 ADD THIS
   } catch (err) {
     console.log("Top vuln error:", err);
   }
@@ -307,14 +322,15 @@ const Dashboard = () => {
           for dependency analysis and vulnerability detection.
         </p>
 
-        <motion.a
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          href="https://github.com/apps/GraphGuardians/installations/new"
-          className="block bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-6 py-3 rounded-xl transition w-full"
-        >
-          ⚡ Install App on GitHub
-        </motion.a>
+
+<motion.a
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  href={`https://github.com/apps/GraphGuardians/installations/new?redirect_uri=${redirectUrl}`}
+  className="block bg-yellow-400 hover:bg-yellow-300 text-black font-semibold px-6 py-3 rounded-xl transition w-full"
+>
+  ⚡ Install App on GitHub
+</motion.a>
 
         <p className="text-xs text-gray-500 mt-4">
           Choose repositories you want to analyze
@@ -535,11 +551,11 @@ const Dashboard = () => {
   {/* RIGHT → PIE CHART */}
 
 
- {/* RIGHT → ANALYSIS CHART */}
+{/* RIGHT → ANALYSIS CHART */}
 <div className="bg-[#07162f] p-6 rounded-xl">
   <h2 className="text-xl font-semibold mb-4">📈 Repo Analysis</h2>
 
-  <RepoAnalysisChart repoId={selectedRepoId} />
+  <SeverityBarGraph vulnerabilities={allVulns} />
 </div>
 
 </div>
