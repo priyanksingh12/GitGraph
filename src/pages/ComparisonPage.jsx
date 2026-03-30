@@ -37,13 +37,13 @@ const ComparisonPage = () => {
 
       {/* 🔥 BLOCK 1 - Pie Charts (fetches its own data) */}
       <div className="bg-white/5 p-6 rounded-xl mb-10">
-        <h2 className="text-xl font-semibold mb-4">🥧 Commit Breakdown</h2>
+        <h2 className="text-xl font-semibold mb-4"> Commit Breakdown</h2>
         <PieComparison repoId={repoId} />
       </div>
 
       {/* 🔥 BLOCK 2 - Severity Bar Graph */}
       <div className="bg-white/5 p-6 rounded-xl mb-10">
-        <h2 className="text-xl font-semibold mb-4">📈 Vulnerability Severity</h2>
+        <h2 className="text-xl font-semibold mb-4">Vulnerability Severity</h2>
         <SeverityBarGraph vulnerabilities={vulnerabilities} />
       </div>
 

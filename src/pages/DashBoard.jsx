@@ -467,38 +467,51 @@ const location = useLocation();
     return <div className="text-white p-10">Loading dashboard...</div>;
 
   /* ================= FINAL UI ================= */
-
- return (
-  <div className="min-h-screen bg-[#080c18] text-[#f0f4ff] flex">
+return (
+  <div className="min-h-screen bg-[#080c18] text-[#f0f4ff] flex font-sans">
 
     {/* ================= SIDEBAR ================= */}
     <aside className="hidden md:flex flex-col w-[260px] bg-[#0d1225] border-r border-[#1a2240] p-6 justify-between">
 
       <div>
-        <h1 className="text-xl font-semibold mb-8">⚡ Sentinel</h1>
+        <h1 className="text-2xl font-semibold mb-10 tracking-wide">⚡ Sentinel</h1>
 
-        <nav className="space-y-3 text-sm">
-          <div className="p-3 rounded-lg bg-[#121938] border-l-4 border-[#00cdd4]">
+        <nav className="space-y-3 text-[15px]">
+
+          <div className="p-3 rounded-lg bg-[#121938] border-l-4 border-[#00cdd4] cursor-pointer">
             Dashboard
           </div>
-          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+
+          <div onClick={() => navigate(`/vulnerabilities/${selectedRepoId}`)} className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
             Vulnerabilities
           </div>
-          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
-            Network
-          </div>
+
           <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
             Reports
           </div>
-          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
-            Settings
+
+          <div onClick={() => navigate(`/chain/${selectedRepoId}`)} className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+            Chain Graph
           </div>
+
+          <div onClick={() => navigate(`/comparison/${selectedRepoId}`)} className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+            Comparison
+          </div>
+
+          <div onClick={handleRescan} className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+            Rescan
+          </div>
+
+          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+            Download Report
+          </div>
+
         </nav>
       </div>
 
       <div className="border-t border-[#1a2240] pt-4">
-        <p className="text-sm">{user?.githubUsername}</p>
-        <p className="text-xs text-[#6b7fa3]">Developer</p>
+        <p className="text-base">{user?.githubUsername}</p>
+        <p className="text-sm text-[#6b7fa3]">Developer</p>
       </div>
     </aside>
 
@@ -506,177 +519,165 @@ const location = useLocation();
     <div className="flex-1 flex flex-col overflow-x-hidden">
 
       {/* HEADER */}
-      <div className="flex justify-between items-center px-10 py-6 border-b border-[#1a2240]">
-        <h1 className="text-2xl font-semibold">Security Overview</h1>
+      <div className="flex justify-between items-center px-12 py-8 border-b border-[#1a2240]">
+        <h1 className="text-4xl font-semibold tracking-wide">
+          Security Overview
+        </h1>
 
-        <div className="flex items-center gap-4">
-          <input
-            placeholder="Search..."
-            className="bg-[#0d1225] border border-[#1a2240] px-4 py-2 rounded-lg text-sm outline-none"
-          />
-          <div className="w-8 h-8 bg-[#0d1225] rounded-full" />
-        </div>
+        <button
+          onClick={handleBack}
+         className="px-6 py-2.5 rounded-xl 
+bg-gradient-to-r from-[#00cdd4]/10 to-[#3b82f6]/10 
+text-[#00cdd4] 
+border border-[#00cdd4]/30 
+hover:from-[#00cdd4]/20 hover:to-[#3b82f6]/20 
+hover:scale-105 transition-all duration-300 
+shadow-sm hover:shadow-[#00cdd4]/20"
+        >
+          ← Back
+        </button>
       </div>
 
       {/* CONTENT */}
-      <div className="p-10 space-y-12">
+      <div className="p-12 space-y-14">
 
         {/* HERO STATS */}
+        <div className="grid md:grid-cols-4 gap-10">
+
+          <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240] border-l-4 border-[#b400d4]">
+            <p className="text-5xl font-bold">{dashboardData.riskScore}</p>
+            <p className="text-[#6b7fa3] mt-3 text-base">Risk Score</p>
+          </div>
+
+          <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240] border-l-4 border-[#ff4560]">
+            <p className="text-5xl font-bold">{dashboardData.vulnerabilities}</p>
+            <p className="text-[#6b7fa3] mt-3 text-base">Vulnerabilities</p>
+          </div>
+
+          <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240] border-l-4 border-[#ff9f43]">
+            <p className="text-5xl font-bold">{dashboardData.dependencies}</p>
+            <p className="text-[#6b7fa3] mt-3 text-base">Dependencies</p>
+          </div>
+
+          <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240] border-l-4 border-[#3b82f6]">
+            <p className="text-5xl font-bold">{health}%</p>
+            <p className="text-[#6b7fa3] mt-3 text-base">Health</p>
+          </div>
+
+        </div>
+
+        {/* NETWORK MAP */}
+        <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240]">
+          <h2 className="text-2xl mb-8 font-semibold">Network Map</h2>
+
+          <div className="w-full h-[480px]">
+            <SeverityBarGraph vulnerabilities={allVulns} />
+          </div>
+        </div>
+
+        {/* VULNS + ALERTS */}
         <div className="grid md:grid-cols-4 gap-8">
-          <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] border-l-4 border-[#00cdd4]">
-            <p className="text-3xl font-bold">{dashboardData.riskScore}</p>
-            <p className="text-[#6b7fa3] mt-2">Risk Score</p>
+
+          <div className="md:col-span-3 bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240]">
+            <h2 className="text-3xl mb-8 font-semibold">Recent Vulnerabilities</h2>
+
+            <div className="space-y-6">
+              {topVulns.map((v, i) => (
+                <div key={i} className="flex justify-between items-center h-[64px] border-b border-[#1a2240]">
+
+                  <span className="text-lg font-medium">
+                    CVE-{i + 1234}
+                  </span>
+
+                  <span className="text-[#6b7fa3] text-base w-[280px] truncate">
+                    {v.fix}
+                  </span>
+
+                  <span className={`text-lg font-semibold ${
+                    v.severity === "HIGH"
+                      ? "text-red-400"
+                      : v.severity === "MEDIUM"
+                      ? "text-orange-400"
+                      : "text-yellow-400"
+                  }`}>
+                    {v.severity}
+                  </span>
+
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] border-l-4 border-[#ff4560]">
-            <p className="text-3xl font-bold">{dashboardData.vulnerabilities}</p>
-            <p className="text-[#6b7fa3] mt-2">Vulnerabilities</p>
+          {/* ALERTS */}
+          <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240] flex flex-col justify-center items-center">
+            <p className="text-6xl font-bold text-red-400">{dashboardData.vulnerabilities}</p>
+            <p className="text-[#6b7fa3] mt-3 text-lg">Alerts</p>
           </div>
 
-          <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] border-l-4 border-[#ff9f43]">
-            <p className="text-3xl font-bold">{dashboardData.dependencies}</p>
-            <p className="text-[#6b7fa3] mt-2">Dependencies</p>
-          </div>
-
-          <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] border-l-4 border-[#3b82f6]">
-            <p className="text-3xl font-bold">{health}%</p>
-            <p className="text-[#6b7fa3] mt-2">Health</p>
-          </div>
         </div>
 
-        {/* MAIN GRID */}
-        <div className="grid md:grid-cols-3 gap-10">
+        {/* TOP EXPOSURES (FIXED LOGIC) */}
+        <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240]">
+          <h2 className="text-2xl mb-8 font-semibold">Top Exposures</h2>
 
-          {/* LEFT */}
-          <div className="md:col-span-2 space-y-10">
+          <div className="space-y-6">
+            {topVulns.map((v, i) => {
 
-            {/* NETWORK MAP */}
-            <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240]">
-              <h2 className="text-lg mb-6">Network Map</h2>
+              const width =
+                v.severity === "HIGH"
+                  ? 90
+                  : v.severity === "MEDIUM"
+                  ? 60
+                  : 30;
 
-              <div className="w-full h-[320px] overflow-hidden rounded-xl">
-                <SeverityBarGraph vulnerabilities={allVulns} />
-              </div>
-            </div>
-
-            {/* VULNERABILITY TABLE */}
-            <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240]">
-              <h2 className="text-lg mb-6">Recent Vulnerabilities</h2>
-
-              <div className="space-y-4">
-                {topVulns.map((v, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between items-center h-[56px] border-b border-[#1a2240]"
-                  >
-                    <span className="text-sm">CVE-{i + 1234}</span>
-
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        v.severity === "HIGH"
-                          ? "bg-red-500/20 text-red-400"
-                          : v.severity === "MEDIUM"
-                          ? "bg-orange-500/20 text-orange-400"
-                          : "bg-yellow-500/20 text-yellow-400"
-                      }`}
-                    >
-                      {v.severity}
-                    </span>
-
-                    <span className="text-[#6b7fa3] text-sm truncate w-[200px]">
-                      {v.fix}
-                    </span>
+              return (
+                <div key={i}>
+                  <div className="flex justify-between mb-2 text-base">
+                    <span>{v.package}</span>
+                    <span>{v.severity}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
-          {/* RIGHT */}
-          <div className="space-y-10">
-
-            {/* RISK SCORE */}
-            <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] text-center">
-              <p className="text-5xl font-bold text-[#00cdd4]">
-                {dashboardData.riskScore}
-              </p>
-              <p className="mt-2 text-[#6b7fa3]">Overall Risk</p>
-            </div>
-
-            {/* AI INSIGHTS FIXED */}
-            <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240]">
-              <h2 className="mb-4">🤖 AI Insights</h2>
-
-              {Array.isArray(dashboardData.aiInsights) ? (
-                dashboardData.aiInsights.slice(0, 3).map((i, idx) => (
-                  <p key={idx} className="text-[#6b7fa3] text-sm leading-7 mb-3">
-                    {i.explanation}
-                  </p>
-                ))
-              ) : (
-                <p className="text-[#6b7fa3] text-sm">
-                  {dashboardData.aiInsights || "No insights available"}
-                </p>
-              )}
-            </div>
+                  <div className="w-full h-3 rounded-full bg-[#1a2240] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${width}%`,
+                        background:
+                          "linear-gradient(90deg, #22c55e, #eab308, #f97316, #ef4444)"
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* TOP EXPOSURES */}
-        <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240]">
-          <h2 className="mb-6">Top Exposures</h2>
-
-          <div className="space-y-5">
-            {topVulns.map((v, i) => (
-              <div key={i}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>{v.package}</span>
-                  <span>{v.severity}</span>
-                </div>
-
-                <div className="w-full h-2 bg-[#1a2240] rounded-full">
-                  <div
-                    className="h-full bg-[#ff4560] rounded-full"
-                    style={{ width: `${(i + 1) * 25}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* AI */}
+        <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240]">
+          <h2 className="text-2xl mb-6 font-semibold">🤖 AI Insights</h2>
         </div>
 
-        {/* ACTIONS */}
-        <div className="flex flex-wrap gap-4">
-          <button onClick={handleBack} className="px-4 py-2 bg-gray-700 rounded">
-            Back
-          </button>
+        {/* 🔥 PREMIUM BUTTONS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
-          <button
-            onClick={() => navigate(`/chain/${selectedRepoId}`)}
-            className="px-4 py-2 bg-red-500 rounded"
-          >
+          <button className="py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/30 hover:scale-105 transition">
             Chain Graph
           </button>
 
-          <button
-            onClick={() => navigate(`/comparison/${selectedRepoId}`)}
-            className="px-4 py-2 bg-blue-400 text-black rounded"
-          >
+          <button className="py-3 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 text-purple-300 border border-purple-500/30 hover:scale-105 transition">
             Comparison
           </button>
 
-          <button
-            onClick={handleRescan}
-            className="px-4 py-2 bg-green-500 text-black rounded"
-          >
+          <button className="py-3 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30 hover:scale-105 transition">
             Rescan
           </button>
 
-          <ReportButton repoId={selectedRepoId} />
-        </div>
 
-        {/* CHAT */}
-        <AIChat repoData={dashboardData} />
+  <ReportButton repoId={selectedRepoId} />
+
+
+        </div>
 
       </div>
     </div>

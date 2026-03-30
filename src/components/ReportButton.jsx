@@ -79,12 +79,21 @@ const ReportButton = ({ repoId }) => {
   };
 
   return (
-    <button
-      onClick={generatePDF}
-      className="bg-purple-500 hover:bg-purple-400 px-4 py-2 rounded-lg text-white"
-    >
-      📄 Download Full Report
-    </button>
+  <button
+  onClick={generatePDF}
+  className="
+    w-full py-3 rounded-xl 
+    bg-gradient-to-r from-cyan-500/10 to-blue-500/10 
+    text-cyan-300 
+    border border-cyan-500/30 
+    hover:from-cyan-500/20 hover:to-blue-500/20 
+    hover:scale-105 
+    transition-all duration-300 
+    flex items-center justify-center gap-2
+  "
+>
+   Download Full Report
+</button>
   );
 };
 
