@@ -468,161 +468,220 @@ const location = useLocation();
 
   /* ================= FINAL UI ================= */
 
-  return (
-    <div className="min-h-screen bg-[#020817] text-white p-8">
+ return (
+  <div className="min-h-screen bg-[#080c18] text-[#f0f4ff] flex">
+
+    {/* ================= SIDEBAR ================= */}
+    <aside className="hidden md:flex flex-col w-[260px] bg-[#0d1225] border-r border-[#1a2240] p-6 justify-between">
+
+      <div>
+        <h1 className="text-xl font-semibold mb-8">⚡ Sentinel</h1>
+
+        <nav className="space-y-3 text-sm">
+          <div className="p-3 rounded-lg bg-[#121938] border-l-4 border-[#00cdd4]">
+            Dashboard
+          </div>
+          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+            Vulnerabilities
+          </div>
+          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+            Network
+          </div>
+          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+            Reports
+          </div>
+          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
+            Settings
+          </div>
+        </nav>
+      </div>
+
+      <div className="border-t border-[#1a2240] pt-4">
+        <p className="text-sm">{user?.githubUsername}</p>
+        <p className="text-xs text-[#6b7fa3]">Developer</p>
+      </div>
+    </aside>
+
+    {/* ================= MAIN ================= */}
+    <div className="flex-1 flex flex-col overflow-x-hidden">
 
       {/* HEADER */}
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {dashboardData.repo?.name}
-          </h1>
-          <p className="text-gray-400">
-            v{dashboardData.repo?.scanCount} • {dashboardData.repo?.status}
-          </p>
+      <div className="flex justify-between items-center px-10 py-6 border-b border-[#1a2240]">
+        <h1 className="text-2xl font-semibold">Security Overview</h1>
+
+        <div className="flex items-center gap-4">
+          <input
+            placeholder="Search..."
+            className="bg-[#0d1225] border border-[#1a2240] px-4 py-2 rounded-lg text-sm outline-none"
+          />
+          <div className="w-8 h-8 bg-[#0d1225] rounded-full" />
         </div>
-
-        <button onClick={handleBack} className="text-sm underline">
-          ← Back
-        </button>
       </div>
 
-      {/* STATS */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <StatsCard title="Risk Score" value={dashboardData.riskScore} />
-        <StatsCard title="Dependencies" value={dashboardData.dependencies} />
-        <StatsCard title="Vulnerabilities" value={dashboardData.vulnerabilities} />
-        <StatsCard title="Health" value={`${health}%`} />
-      </div>
+      {/* CONTENT */}
+      <div className="p-10 space-y-12">
 
-      {/* HEALTH */}
-      <div className="mt-6">
-        <HealthBar value={health} />
-      </div>
-
-     {/* COMPARISON + CHART BLOCK */}
-<div className="grid md:grid-cols-2 gap-6 mt-6">
-
- 
-{/* LEFT → TOP VULNERABILITIES */}
-<div className="bg-[#07162f] p-6 rounded-xl flex flex-col justify-between">
-
-  <div>
-    <h2 className="text-xl font-semibold mb-4">⚠ Top Vulnerabilities</h2>
-
-    <div className="space-y-3">
-      {topVulns.map((v, i) => (
-        <div
-          key={i}
-          className="flex justify-between items-center text-sm border-b border-gray-700 pb-2"
-        >
-          <div>
-            <p className="font-semibold">{v.package}</p>
-            <p className="text-gray-400 text-xs truncate max-w-[200px]">
-              {v.fix}
-            </p>
+        {/* HERO STATS */}
+        <div className="grid md:grid-cols-4 gap-8">
+          <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] border-l-4 border-[#00cdd4]">
+            <p className="text-3xl font-bold">{dashboardData.riskScore}</p>
+            <p className="text-[#6b7fa3] mt-2">Risk Score</p>
           </div>
 
-          <span
-            className={`text-xs font-bold ${
-              v.severity === "HIGH"
-                ? "text-red-400"
-                : v.severity === "MEDIUM"
-                ? "text-yellow-400"
-                : "text-green-400"
-            }`}
-          >
-            {v.severity}
-          </span>
+          <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] border-l-4 border-[#ff4560]">
+            <p className="text-3xl font-bold">{dashboardData.vulnerabilities}</p>
+            <p className="text-[#6b7fa3] mt-2">Vulnerabilities</p>
+          </div>
+
+          <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] border-l-4 border-[#ff9f43]">
+            <p className="text-3xl font-bold">{dashboardData.dependencies}</p>
+            <p className="text-[#6b7fa3] mt-2">Dependencies</p>
+          </div>
+
+          <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] border-l-4 border-[#3b82f6]">
+            <p className="text-3xl font-bold">{health}%</p>
+            <p className="text-[#6b7fa3] mt-2">Health</p>
+          </div>
         </div>
-      ))}
+
+        {/* MAIN GRID */}
+        <div className="grid md:grid-cols-3 gap-10">
+
+          {/* LEFT */}
+          <div className="md:col-span-2 space-y-10">
+
+            {/* NETWORK MAP */}
+            <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240]">
+              <h2 className="text-lg mb-6">Network Map</h2>
+
+              <div className="w-full h-[320px] overflow-hidden rounded-xl">
+                <SeverityBarGraph vulnerabilities={allVulns} />
+              </div>
+            </div>
+
+            {/* VULNERABILITY TABLE */}
+            <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240]">
+              <h2 className="text-lg mb-6">Recent Vulnerabilities</h2>
+
+              <div className="space-y-4">
+                {topVulns.map((v, i) => (
+                  <div
+                    key={i}
+                    className="flex justify-between items-center h-[56px] border-b border-[#1a2240]"
+                  >
+                    <span className="text-sm">CVE-{i + 1234}</span>
+
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        v.severity === "HIGH"
+                          ? "bg-red-500/20 text-red-400"
+                          : v.severity === "MEDIUM"
+                          ? "bg-orange-500/20 text-orange-400"
+                          : "bg-yellow-500/20 text-yellow-400"
+                      }`}
+                    >
+                      {v.severity}
+                    </span>
+
+                    <span className="text-[#6b7fa3] text-sm truncate w-[200px]">
+                      {v.fix}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT */}
+          <div className="space-y-10">
+
+            {/* RISK SCORE */}
+            <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240] text-center">
+              <p className="text-5xl font-bold text-[#00cdd4]">
+                {dashboardData.riskScore}
+              </p>
+              <p className="mt-2 text-[#6b7fa3]">Overall Risk</p>
+            </div>
+
+            {/* AI INSIGHTS FIXED */}
+            <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240]">
+              <h2 className="mb-4">🤖 AI Insights</h2>
+
+              {Array.isArray(dashboardData.aiInsights) ? (
+                dashboardData.aiInsights.slice(0, 3).map((i, idx) => (
+                  <p key={idx} className="text-[#6b7fa3] text-sm leading-7 mb-3">
+                    {i.explanation}
+                  </p>
+                ))
+              ) : (
+                <p className="text-[#6b7fa3] text-sm">
+                  {dashboardData.aiInsights || "No insights available"}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* TOP EXPOSURES */}
+        <div className="bg-[#0d1225] p-10 rounded-2xl border border-[#1a2240]">
+          <h2 className="mb-6">Top Exposures</h2>
+
+          <div className="space-y-5">
+            {topVulns.map((v, i) => (
+              <div key={i}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span>{v.package}</span>
+                  <span>{v.severity}</span>
+                </div>
+
+                <div className="w-full h-2 bg-[#1a2240] rounded-full">
+                  <div
+                    className="h-full bg-[#ff4560] rounded-full"
+                    style={{ width: `${(i + 1) * 25}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ACTIONS */}
+        <div className="flex flex-wrap gap-4">
+          <button onClick={handleBack} className="px-4 py-2 bg-gray-700 rounded">
+            Back
+          </button>
+
+          <button
+            onClick={() => navigate(`/chain/${selectedRepoId}`)}
+            className="px-4 py-2 bg-red-500 rounded"
+          >
+            Chain Graph
+          </button>
+
+          <button
+            onClick={() => navigate(`/comparison/${selectedRepoId}`)}
+            className="px-4 py-2 bg-blue-400 text-black rounded"
+          >
+            Comparison
+          </button>
+
+          <button
+            onClick={handleRescan}
+            className="px-4 py-2 bg-green-500 text-black rounded"
+          >
+            Rescan
+          </button>
+
+          <ReportButton repoId={selectedRepoId} />
+        </div>
+
+        {/* CHAT */}
+        <AIChat repoData={dashboardData} />
+
+      </div>
     </div>
   </div>
-
-  <button
-    onClick={() => navigate(`/vulnerabilities/${selectedRepoId}`)}
-    className="mt-4 bg-yellow-400 text-black px-4 py-2 rounded-lg hover:bg-yellow-300 transition"
-  >
-    ⚠ View Vulnerabilities
-  </button>
-</div>
-
-
-  {/* RIGHT → PIE CHART */}
-
-
-{/* RIGHT → ANALYSIS CHART */}
-<div className="bg-[#07162f] p-6 rounded-xl">
-  <h2 className="text-xl font-semibold mb-4">📈 Repo Analysis</h2>
-
-  <SeverityBarGraph vulnerabilities={allVulns} />
-</div>
-
-</div>
-
-
-      {/* ACTIONS */}
-      <div className="flex flex-wrap gap-4 mt-6">
-
-       
-
-        <button
-          onClick={() => navigate(`/chain/${selectedRepoId}`)}
-          className="bg-red-500 text-white px-4 py-2 rounded"
-        >
-           Chain Graph
-        </button>
-
-       <button
-  onClick={() => navigate(`/comparison/${selectedRepoId}`)}
-  className="bg-blue-400 text-black px-4 py-2 rounded"
->
-   View Comparison
-</button>
-
-        <button
-          onClick={handleRescan}
-          className="bg-green-500 text-black px-4 py-2 rounded"
-        >
-          🔁 Scan Again
-        </button>
-
-        <ReportButton repoId={selectedRepoId} />
-
-
-      </div>
-
-       <div className="bg-[#07162f] p-6 rounded-xl">
-          <h2 className="text-lg mb-2">🚨 Alerts</h2>
-          <p className="text-red-400 font-semibold">
-            {dashboardData.vulnerabilities} vulnerabilities detected
-          </p>
-        </div>
-
-      
-
-      {/* AI */}
-      <div className="mt-6 bg-[#07162f] p-6 rounded-xl">
-        <h2 className="mb-3">🤖 AI Insights</h2>
-
-        {dashboardData.aiInsights?.length > 0 ? (
-          dashboardData.aiInsights.map((i, idx) => (
-            <div key={idx} className="mb-3 border-b border-gray-700 pb-2">
-              <p>📦 {i.package}</p>
-              <p className="text-gray-400 text-sm">{i.explanation}</p>
-            </div>
-          ))
-        ) : (
-          <p>No insights</p>
-        )}
-      </div>
-
-      <div className="mt-6">
-        <AIChat repoData={dashboardData} />
-      </div>
-
-    </div>
-  );
+);
 };
 
 export default Dashboard;
