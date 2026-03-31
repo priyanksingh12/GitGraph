@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import { io } from "socket.io-client";
+
 import { useNavigate, useParams,useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaGithub } from "react-icons/fa";
-import RepoAnalysisChart from "../components/RepoAnalysisChart";
+
 import SeverityBarGraph from "../components/SeverityBarGraph";
 import {
   getCurrentUser,
@@ -13,17 +13,12 @@ import {
 } from "../api";
 
 import API from "../api";
-
-// ✅ Components
-import StatsCard from "../components/StatsCard";
-import HealthBar from "../components/HealthBar";
-import { getGraphData } from "../api";
-import AIChat from "../components/AIChat";
+import socket from "../socket";
 import ReportButton from "../components/ReportButton";
 
 
 /* ================= SOCKET (FIXED) ================= */
-let socket;
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -39,6 +34,7 @@ const Dashboard = () => {
   const [reposLoaded, setReposLoaded] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 const [allVulns, setAllVulns] = useState([]);
+const [graphVersion, setGraphVersion] = useState(0);
 
   const intervalRef = useRef(null);
   const currentVersionRef = useRef(null);
@@ -49,15 +45,7 @@ const location = useLocation();
 
   /* ================= INIT ================= */
   useEffect(() => {
-    if (!socket) {
-      socket = io(import.meta.env.VITE_API_BASE_URL, {
-        transports: ["websocket"],
-      });
-
-      socket.on("connect", () => {
-        console.log("✅ socket connected:", socket.id);
-      });
-    }
+    
 
     fetchUser();
 
@@ -67,15 +55,13 @@ const location = useLocation();
   }, []);
 
   /* ================= URL LOAD ================= */
- useEffect(() => {
-  if (urlRepoId) {
-    console.log("🔥 Loading repo from URL:", urlRepoId);
+useEffect(() => {
+  if (!urlRepoId) return;
 
-    setSelectedRepoId(urlRepoId);
-    listenForScan(urlRepoId);
+  console.log("🔥 Loading repo from URL:", urlRepoId);
 
-    fetchTopVulnerabilities(urlRepoId);
-  }
+  setSelectedRepoId(urlRepoId);
+
 }, [urlRepoId]);
 
   /* ================= AUTO FETCH REPOS ================= */
@@ -90,6 +76,16 @@ const location = useLocation();
       fetchRepos();
     }
   }, [user]);
+
+
+  useEffect(() => {
+  if (!selectedRepoId) return;
+
+  console.log("🎧 Listening for repo:", selectedRepoId);
+
+  listenForScan(selectedRepoId);
+
+}, [selectedRepoId]);
 
 
   useEffect(() => {
@@ -151,18 +147,32 @@ const location = useLocation();
   const listenForScan = (repoId) => {
     if (!socket) return;
 
+     if (currentVersionRef.current === null) {
+  currentVersionRef.current = 0;
+}
+
     socket.emit("joinRepoRoom", repoId);
-    socket.off(`scan-${repoId}`);
 
-    socket.on(`scan-${repoId}`, (data) => {
-      console.log("🔥 SOCKET UPDATE");
+const eventName = `scan-${repoId}`;
+console.log("🎧 Listening event:", eventName);
 
-      updateDashboard(data);
-      currentVersionRef.current = data.repo?.scanCount;
+socket.off(eventName);
 
-      setIsAnalyzing(false);
-      clearInterval(intervalRef.current);
-    });
+const handler = (data) => {
+  console.log("🔥 SOCKET UPDATE RECEIVED", data);
+
+  updateDashboard(data);
+
+  setGraphVersion(prev => prev + 1);
+  fetchTopVulnerabilities(repoId);
+
+  currentVersionRef.current = data.repo?.scanCount;
+
+  setIsAnalyzing(false);
+  clearInterval(intervalRef.current);
+};
+
+socket.on(eventName, handler);
 
     clearInterval(intervalRef.current);
 
@@ -173,17 +183,23 @@ const location = useLocation();
 
         if (!data) return;
 
-        if (
-          currentVersionRef.current &&
-          data.repo.scanCount > currentVersionRef.current
-        ) {
-          updateDashboard(data);
-          currentVersionRef.current = data.repo.scanCount;
-        }
+      if (
+  currentVersionRef.current &&
+  data.repo.scanCount > currentVersionRef.current
+) {
+  updateDashboard(data);
+  currentVersionRef.current = data.repo.scanCount;
+
+  // 🔥 ADD THESE
+  setGraphVersion(prev => prev + 1);
+  fetchTopVulnerabilities(repoId);
+}
 
         if (data.repo.status === "scanned") {
           updateDashboard(data);
           setIsAnalyzing(false);
+          setGraphVersion(prev => prev + 1);
+fetchTopVulnerabilities(repoId);
         }
       } catch {
         console.log("Polling error");
@@ -571,7 +587,13 @@ shadow-sm hover:shadow-[#00cdd4]/20"
           <h2 className="text-2xl mb-8 font-semibold">Network Map</h2>
 
           <div className="w-full h-[480px]">
-            <SeverityBarGraph vulnerabilities={allVulns} />
+
+           <SeverityBarGraph
+  key={graphVersion}
+  vulnerabilities={allVulns}
+/>
+
+
           </div>
         </div>
 
