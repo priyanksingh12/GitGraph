@@ -25,6 +25,7 @@ const Dashboard = () => {
   const { repoId: urlRepoId } = useParams();
 
   const [user, setUser] = useState(null);
+ 
   const [repos, setRepos] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [topVulns, setTopVulns] = useState([]);
@@ -77,22 +78,45 @@ useEffect(() => {
     }
   }, [user]);
 
-
-  useEffect(() => {
+useEffect(() => {
   if (!selectedRepoId) return;
 
-  console.log("🎧 Listening for repo:", selectedRepoId);
+  // 🔥 FETCH INITIAL DATA
+  const loadInitial = async () => {
+    try {
+      const res = await getDashboard(selectedRepoId);
+      const data = res?.data;
+
+      if (data?.repo?.status === "scanned") {
+        updateDashboard(data);
+        fetchTopVulnerabilities(selectedRepoId);
+      } else {
+        setIsAnalyzing(true); // still processing
+      }
+    } catch (err) {
+      console.log("Initial load error");
+    }
+  };
+
+  loadInitial();
 
   listenForScan(selectedRepoId);
 
 }, [selectedRepoId]);
 
 
-  useEffect(() => {
-  // When user comes back from GitHub install
+ useEffect(() => {
   if (location.search.includes("installation_id")) {
     console.log("🔥 Detected installation, refreshing user...");
-    fetchUser(); // 🔥 re-fetch user so installationId updates
+
+    const handleInstall = async () => {
+      await fetchUser();
+
+      // ✅ REDIRECT TO DASHBOARD
+      navigate("/dashboard");
+    };
+
+    handleInstall();
   }
 }, [location]);
 
@@ -161,50 +185,52 @@ socket.off(eventName);
 const handler = (data) => {
   console.log("🔥 SOCKET UPDATE RECEIVED", data);
 
-  updateDashboard(data);
+  if (data.repo?.status === "scanned") {
+    console.log("✅ FINAL SOCKET DATA RECEIVED");
 
-  setGraphVersion(prev => prev + 1);
-  fetchTopVulnerabilities(repoId);
+    updateDashboard(data);
 
-  currentVersionRef.current = data.repo?.scanCount;
+    setGraphVersion(prev => prev + 1);
+    fetchTopVulnerabilities(repoId);
 
-  setIsAnalyzing(false);
-  clearInterval(intervalRef.current);
+    currentVersionRef.current = data.repo?.scanCount;
+
+    setIsAnalyzing(false);
+
+    clearInterval(intervalRef.current);
+  }
 };
 
 socket.on(eventName, handler);
 
     clearInterval(intervalRef.current);
 
-    intervalRef.current = setInterval(async () => {
-      try {
-        const res = await getDashboard(repoId);
-        const data = res?.data;
+   intervalRef.current = setInterval(async () => {
+  try {
+    const res = await getDashboard(repoId);
+    const data = res?.data;
 
-        if (!data) return;
+    if (!data) return;
 
-      if (
-  currentVersionRef.current &&
-  data.repo.scanCount > currentVersionRef.current
-) {
-  updateDashboard(data);
-  currentVersionRef.current = data.repo.scanCount;
+    if (data.repo.status === "scanned") {
+      console.log("✅ FINAL POLLING DATA RECEIVED");
 
-  // 🔥 ADD THESE
-  setGraphVersion(prev => prev + 1);
-  fetchTopVulnerabilities(repoId);
-}
+      updateDashboard(data);
 
-        if (data.repo.status === "scanned") {
-          updateDashboard(data);
-          setIsAnalyzing(false);
-          setGraphVersion(prev => prev + 1);
-fetchTopVulnerabilities(repoId);
-        }
-      } catch {
-        console.log("Polling error");
-      }
-    }, 3000);
+      currentVersionRef.current = data.repo.scanCount;
+
+      setGraphVersion(prev => prev + 1);
+      fetchTopVulnerabilities(repoId);
+
+      setIsAnalyzing(false); // 🔥 ONLY HERE
+
+      clearInterval(intervalRef.current);
+    }
+
+  } catch {
+    console.log("Polling error");
+  }
+}, 3000);
   };
 
   /* ================= UPDATE ================= */
@@ -223,6 +249,7 @@ fetchTopVulnerabilities(repoId);
     try {
       setIsAnalyzing(true);
       setDashboardData(null);
+      
 
       const res = await addRepo({ url: repo.html_url });
       const repoId = res?.data?.repo?._id;
@@ -395,7 +422,7 @@ fetchTopVulnerabilities(repoId);
     );
 
   // ANALYZING
-  if (isAnalyzing)
+  if (isAnalyzing || !dashboardData?.repo)
   return (
     <div className="min-h-screen bg-[#020817] text-white flex flex-col items-center justify-center px-6">
 
@@ -479,8 +506,7 @@ fetchTopVulnerabilities(repoId);
     </div>
   );
 
-  if (!dashboardData)
-    return <div className="text-white p-10">Loading dashboard...</div>;
+  
 
   /* ================= FINAL UI ================= */
 return (
