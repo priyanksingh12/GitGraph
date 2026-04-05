@@ -275,7 +275,7 @@ export default function AnalyzingScreen({ repoId, onComplete }) {
 
           {/* Footer */}
           <p className="text-[10px] text-slate-700 font-mono mt-4 text-center tracking-widest uppercase">
-            Sentinel Intelligence Node • US‑EAST‑ALPHA
+           • Git‑Graph
           </p>
         </motion.div>
 
