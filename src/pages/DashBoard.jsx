@@ -36,6 +36,7 @@ const Dashboard = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 const [allVulns, setAllVulns] = useState([]);
 const [graphVersion, setGraphVersion] = useState(0);
+const [vulnsLoaded, setVulnsLoaded] = useState(false); // ✅ NEW
 
   const intervalRef = useRef(null);
   const currentVersionRef = useRef(null);
@@ -81,6 +82,8 @@ useEffect(() => {
 useEffect(() => {
   if (!selectedRepoId) return;
 
+  setVulnsLoaded(false); // ✅ Reset on repo change
+
   // 🔥 FETCH INITIAL DATA
   const loadInitial = async () => {
     try {
@@ -119,6 +122,13 @@ useEffect(() => {
     handleInstall();
   }
 }, [location]);
+
+// ✅ NEW: Only stop analyzing when BOTH dashboardData AND vulns are ready
+useEffect(() => {
+  if (dashboardData?.repo && vulnsLoaded) {
+    setIsAnalyzing(false);
+  }
+}, [dashboardData, vulnsLoaded]);
 
   /* ================= USER ================= */
   const fetchUser = async () => {
@@ -164,6 +174,8 @@ useEffect(() => {
     setAllVulns(vulns); // 🔥 ADD THIS
   } catch (err) {
     console.log("Top vuln error:", err);
+  } finally {
+    setVulnsLoaded(true); // ✅ Mark vulns as loaded regardless of success/error
   }
 };
 
@@ -195,7 +207,7 @@ const handler = (data) => {
 
     currentVersionRef.current = data.repo?.scanCount;
 
-    setIsAnalyzing(false);
+    // ✅ REMOVED setIsAnalyzing(false) — now handled by useEffect
 
     clearInterval(intervalRef.current);
   }
@@ -222,7 +234,7 @@ socket.on(eventName, handler);
       setGraphVersion(prev => prev + 1);
       fetchTopVulnerabilities(repoId);
 
-      setIsAnalyzing(false); // 🔥 ONLY HERE
+      // ✅ REMOVED setIsAnalyzing(false) — now handled by useEffect
 
       clearInterval(intervalRef.current);
     }
@@ -505,7 +517,6 @@ socket.on(eventName, handler);
       </div>
     </div>
   );
-
   
 
   /* ================= FINAL UI ================= */
@@ -528,10 +539,6 @@ return (
             Vulnerabilities
           </div>
 
-          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
-            Reports
-          </div>
-
           <div onClick={() => navigate(`/chain/${selectedRepoId}`)} className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
             Chain Graph
           </div>
@@ -544,10 +551,7 @@ return (
             Rescan
           </div>
 
-          <div className="p-3 hover:bg-[#121938] rounded-lg cursor-pointer">
-            Download Report
-          </div>
-
+        
         </nav>
       </div>
 
@@ -584,7 +588,7 @@ shadow-sm hover:shadow-[#00cdd4]/20"
       <div className="p-12 space-y-14">
 
         {/* HERO STATS */}
-        <div className="grid md:grid-cols-4 gap-10">
+        <div className="grid md:grid-cols-3 gap-10">
 
           <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240] border-l-4 border-[#b400d4]">
             <p className="text-5xl font-bold">{dashboardData.riskScore}</p>
@@ -601,10 +605,7 @@ shadow-sm hover:shadow-[#00cdd4]/20"
             <p className="text-[#6b7fa3] mt-3 text-base">Dependencies</p>
           </div>
 
-          <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240] border-l-4 border-[#3b82f6]">
-            <p className="text-5xl font-bold">{health}%</p>
-            <p className="text-[#6b7fa3] mt-3 text-base">Health</p>
-          </div>
+        
 
         </div>
 
@@ -700,24 +701,58 @@ shadow-sm hover:shadow-[#00cdd4]/20"
             })}
           </div>
         </div>
-
-        {/* AI */}
+{/* AI */}
         <div className="bg-[#0d1225] p-12 rounded-2xl border border-[#1a2240]">
-          <h2 className="text-2xl mb-6 font-semibold">🤖 AI Insights</h2>
+          <h2 className="text-2xl mb-6 font-semibold"> AI Insights</h2>
+
+          {(() => {
+            const raw = dashboardData?.aiInsights?.[0];
+            if (!raw) return <p className="text-[#6b7fa3] text-sm">No AI insights available.</p>;
+
+            let insights = raw;
+            if (typeof raw === "string") {
+              try { insights = JSON.parse(raw); } catch { 
+                return <p className="text-[#6b7fa3] text-sm">{raw}</p>; 
+              }
+            }
+
+            return (
+              <div>
+                <p className="text-gray-300 text-sm mb-3">{insights.summary}</p>
+
+                {insights.topAction && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-yellow-300 text-sm mb-3">
+                    ⚡ <strong>Top Action:</strong> {insights.topAction}
+                  </div>
+                )}
+
+                {insights.issues?.slice(0, 3).map((issue, i) => (
+                  <div key={i} className="border border-white/10 rounded-lg p-3 mb-2">
+                    <div className="flex justify-between">
+                      <span className="text-cyan-400 font-mono text-sm">{issue.package}</span>
+                      <span className="text-xs text-gray-400">{issue.risk}</span>
+                    </div>
+                    <p className="text-gray-400 text-xs mt-1">{issue.explanation}</p>
+                    <code className="text-green-400 text-xs">{issue.fix}</code>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
 
         {/* 🔥 PREMIUM BUTTONS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
-          <button className="py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/30 hover:scale-105 transition">
+          <button onClick={() => navigate(`/chain/${selectedRepoId}`)} className="py-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/30 hover:scale-105 transition">
             Chain Graph
           </button>
 
-          <button className="py-3 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 text-purple-300 border border-purple-500/30 hover:scale-105 transition">
+          <button onClick={() => navigate(`/comparison/${selectedRepoId}`)} className="py-3 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 text-purple-300 border border-purple-500/30 hover:scale-105 transition">
             Comparison
           </button>
 
-          <button className="py-3 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30 hover:scale-105 transition">
+          <button onClick={handleRescan}  className="py-3 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30 hover:scale-105 transition">
             Rescan
           </button>
 

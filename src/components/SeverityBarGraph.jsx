@@ -20,6 +20,12 @@ const getColor = (severity) => {
   return "#22c55e";
 };
 
+const LEGEND = [
+  { label: "High", color: "#ef4444" },
+  { label: "Medium", color: "#facc15" },
+  { label: "Low", color: "#22c55e" },
+];
+
 const SeverityBarGraph = ({ vulnerabilities }) => {
 
   const safeData = Array.isArray(vulnerabilities)
@@ -41,10 +47,27 @@ const SeverityBarGraph = ({ vulnerabilities }) => {
   return (
     <div>
 
-      {/* 🔥 Bigger Premium Title */}
-      <h2 className="text-3xl mb-8 font-semibold tracking-wide">
-        📊 Severity Analytics
-      </h2>
+     <div className="flex items-center justify-between mb-8">
+  <h2 className="text-3xl font-semibold tracking-wide">
+    📊 Severity Analytics
+  </h2>
+
+  {/* LEGEND */}
+  <div className="flex items-center gap-5">
+    <span className="text-base text-[#6b7fa3] font-medium">Severity :</span>
+    {LEGEND.map(({ label, color }) => (
+      <div key={label} className="flex items-center gap-2">
+        <span
+          className="inline-block w-4 h-4 rounded-sm flex-shrink-0"
+          style={{ backgroundColor: color }}
+        />
+        <span className="text-base text-[#f0f4ff] font-medium">
+          {label}
+        </span>
+      </div>
+    ))}
+  </div>
+</div>
 
       <div className="overflow-x-auto">
         <div style={{ width: `${data.length * 100}px` }}>
@@ -85,8 +108,8 @@ const SeverityBarGraph = ({ vulnerabilities }) => {
               {/* 🔥 Premium Bars */}
               <Bar
                 dataKey="value"
-                radius={[6, 6, 0, 0]}   // rounded top
-                barSize={32}            // thicker bars
+                radius={[6, 6, 0, 0]}
+                barSize={32}
                 isAnimationActive={false}
               >
                 {data.map((entry, index) => (
