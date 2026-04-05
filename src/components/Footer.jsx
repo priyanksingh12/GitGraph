@@ -7,11 +7,13 @@ import {
   FaTwitter,
   FaFacebook,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const Footer = () => {
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
   const [message, setMessage] = useState("");
+  const navigate=useNavigate();
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.origin);
@@ -96,7 +98,12 @@ const Footer = () => {
             Company
           </h4>
           <ul className="space-y-3 text-base text-slate-400">
-            <li className="transition hover:text-cyan-400">About Us</li>
+           <li
+  onClick={() => navigate("/about")}
+  className="transition hover:text-cyan-400"
+>
+  About Us
+</li>
             <li className="transition hover:text-cyan-400">Careers</li>
             <li className="transition hover:text-cyan-400">Press</li>
             <li className="transition hover:text-cyan-400">Contact</li>

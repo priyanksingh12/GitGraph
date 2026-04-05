@@ -1,7 +1,116 @@
-import { useState } from "react";
+
 import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { registerUser, getCurrentUser } from "../api";
+import photo from "../assets/login.jpg"
+import { useState, useEffect, useRef } from "react";
+
+
+function GraphCanvas() {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx    = canvas.getContext("2d");
+    let animId;
+
+    const resize = () => {
+      canvas.width  = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+
+    const NODE_COUNT   = 68;
+    const CONNECT_DIST = 130;
+
+    const nodes = Array.from({ length: NODE_COUNT }, () => ({
+      x:  Math.random() * canvas.width,
+      y:  Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r:  Math.random() * 2.2 + 1,
+      highlight: Math.random() < 0.14,
+      pulse: Math.random() * Math.PI * 2,
+    }));
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const t = performance.now() / 1000;
+
+      /* move */
+      nodes.forEach(n => {
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > canvas.width)  n.vx *= -1;
+        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+      });
+
+      /* edges */
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx   = nodes[i].x - nodes[j].x;
+          const dy   = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < CONNECT_DIST) {
+            const fade      = 1 - dist / CONNECT_DIST;
+            const isSpecial = nodes[i].highlight || nodes[j].highlight;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            if (isSpecial) {
+              ctx.strokeStyle = `rgba(34,211,238,${fade * 0.55})`;
+              ctx.lineWidth   = 0.9;
+            } else {
+              ctx.strokeStyle = `rgba(96,165,250,${fade * 0.22})`;
+              ctx.lineWidth   = 0.5;
+            }
+            ctx.stroke();
+          }
+        }
+      }
+
+      /* nodes */
+      nodes.forEach(n => {
+        const pulse = 0.5 + 0.5 * Math.sin(t * 1.8 + n.pulse);
+
+        if (n.highlight) {
+          /* outer glow ring */
+          const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 6);
+          glow.addColorStop(0,   `rgba(34,211,238,${0.18 * pulse})`);
+          glow.addColorStop(1,   `rgba(34,211,238,0)`);
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r * 6, 0, Math.PI * 2);
+          ctx.fillStyle = glow;
+          ctx.fill();
+
+          /* core dot */
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r + pulse * 0.6, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(34,211,238,${0.75 + pulse * 0.25})`;
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(96,165,250,${0.3 + pulse * 0.12})`;
+          ctx.fill();
+        }
+      });
+
+      animId = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ width: "100%", height: "100%", display: "block", borderRadius: "28px" }}
+    />
+  );
+}
 
 const Register = () => {
   const navigate = useNavigate();
@@ -66,12 +175,27 @@ const Register = () => {
   return (
     <div className="min-h-screen bg-[#020817] px-4 py-10 text-white">
       <div className="mx-auto grid min-h-[85vh] w-full max-w-7xl overflow-hidden rounded-[32px] border border-cyan-500/10 bg-[#06152d]/80 shadow-[0_25px_80px_rgba(0,0,0,0.45)] md:grid-cols-2">
-        <div className="hidden items-center justify-center border-r border-cyan-500/10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_30%)] p-8 md:flex">
-          <div className="flex h-full min-h-[500px] w-full items-center justify-center rounded-[28px] border border-dashed border-cyan-500/20 bg-[#081a36]/70">
-            <p className="text-lg font-medium text-slate-400">
-              Image placeholder
+
+        {/* ── Left: live graph canvas ── */}
+        <div className="hidden md:block border-r border-cyan-500/10 bg-[#030e1f] relative overflow-hidden">
+          {/* subtle radial overlay to blend edges */}
+          <div
+            className="absolute inset-0 z-10 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(ellipse at 50% 50%, transparent 40%, #030e1f 100%)",
+            }}
+          />
+          {/* branding text over canvas */}
+          <div className="absolute bottom-8 left-0 right-0 z-20 text-center pointer-events-none">
+            <p className="text-xs font-semibold tracking-[0.2em] text-cyan-400/60 uppercase">
+              GitGraph
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Repository analysis, visualised
             </p>
           </div>
+          <GraphCanvas />
         </div>
 
         <div className="flex items-center justify-center p-6 sm:p-10">
