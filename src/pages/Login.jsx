@@ -52,13 +52,17 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-[#020817] px-4 py-10 text-white">
       <div className="mx-auto grid min-h-[85vh] w-full max-w-7xl overflow-hidden rounded-[32px] border border-cyan-500/10 bg-[#06152d]/80 shadow-[0_25px_80px_rgba(0,0,0,0.45)] md:grid-cols-2">
-        <div className="hidden items-center justify-center border-r border-cyan-500/10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_30%)] p-8 md:flex">
-          <div className="flex h-full min-h-[500px] w-full items-center justify-center rounded-[28px] border border-dashed border-cyan-500/20 bg-[#081a36]/70">
-            <p className="text-lg font-medium text-slate-400">
-              Image placeholder
-            </p>
-          </div>
-        </div>
+       <div className="hidden items-center justify-center border-r border-cyan-500/10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_30%)] p-8 md:flex">
+  <div className="flex h-full min-h-[500px] w-full items-center justify-center rounded-[28px] border border-dashed border-cyan-500/20 bg-[#081a36]/70 overflow-hidden">
+    
+    <img
+      src="/your-image.png"   // 👉 put your image path here
+      alt="Dashboard preview"
+      className="h-full w-full object-cover rounded-[28px]"
+    />
+
+  </div>
+</div>
 
         <div className="flex items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-xl">

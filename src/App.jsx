@@ -11,7 +11,7 @@ import ChainGraph from "./pages/ChainGraph";
 
 import Vulnerabilities from "./pages/Vulnerabilities";
 import AuthSuccess from "./pages/AuthSuccess";
-
+import Install from "./pages/install"
 // ================= COMPONENTS =================
 import ProtectedRoute from "./components/ProtectedRoute";
 import ComparisonPage from "./pages/ComparisonPage";
@@ -26,6 +26,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/auth/success" element={<AuthSuccess />} />
+      <Route path="/install" element={<Install />} />
 
       {/* ================= PROTECTED ROUTES ================= */}
 

@@ -17,14 +17,12 @@ function buildChains(rawNodes, rawEdges) {
   const nodeMap = {};
   rawNodes.forEach(n => (nodeMap[n.id] = n));
 
-  // adjacency: from → [to]
   const fwd = {};
   rawEdges.forEach(e => {
     if (!fwd[e.from]) fwd[e.from] = [];
     fwd[e.from].push(e.to);
   });
 
-  // reverse: to → [from]
   const rev = {};
   rawEdges.forEach(e => {
     if (!rev[e.to]) rev[e.to] = [];
@@ -33,7 +31,6 @@ function buildChains(rawNodes, rawEdges) {
 
   const vulnNodes = rawNodes.filter(n => n.type === "vulnerability");
 
-  // For each vuln, walk backwards to find all root-to-vuln chains
   const chains = [];
   vulnNodes.forEach(vuln => {
     const trace = (id, path) => {
@@ -47,7 +44,6 @@ function buildChains(rawNodes, rawEdges) {
     trace(vuln.id, [vuln.id]);
   });
 
-  // Deduplicate and keep only chains with length ≥ 2
   const seen = new Set();
   return chains.filter(c => {
     const key = c.join("→");
@@ -94,9 +90,9 @@ const SevBadge = ({ sev }) => {
       color: c.color,
       border: `1px solid ${c.color}55`,
       borderRadius: 4,
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: 700,
-      padding: "2px 7px",
+      padding: "3px 9px",
       letterSpacing: 1,
     }}>
       {c.label}
@@ -114,12 +110,12 @@ const ChainGraph = () => {
 
   const [loading, setLoading] = useState(true);
   const [repoName, setRepoName] = useState("Repository");
-  const [chains, setChains] = useState([]);          // all chains
+  const [chains, setChains] = useState([]);
   const [nodeMap, setNodeMap] = useState({});
-  const [activeIdx, setActiveIdx] = useState(0);     // selected chain index
+  const [activeIdx, setActiveIdx] = useState(0);
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [hoverNode, setHoverNode] = useState(null);
-  const [filter, setFilter] = useState("ALL");       // ALL | CRITICAL | HIGH | MEDIUM | LOW
+  const [filter, setFilter] = useState("ALL");
 
   /* ── fetch ── */
   useEffect(() => {
@@ -256,8 +252,8 @@ const ChainGraph = () => {
 
       {/* ══ LEFT SIDEBAR ══ */}
       <div style={{
-        width: 320,
-        minWidth: 320,
+        width: 340,
+        minWidth: 340,
         background: "rgba(8,10,18,0.88)",
         backdropFilter: "blur(16px)",
         borderRight: "1px solid rgba(99,102,241,0.2)",
@@ -266,7 +262,7 @@ const ChainGraph = () => {
         zIndex: 10,
       }}>
         {/* Header */}
-        <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid rgba(99,102,241,0.15)" }}>
+        <div style={{ padding: "18px 18px 14px", borderBottom: "1px solid rgba(99,102,241,0.15)" }}>
           <button
             onClick={() => navigate(-1)}
             style={{
@@ -274,24 +270,103 @@ const ChainGraph = () => {
               border: "1px solid rgba(99,102,241,0.3)",
               color: "#a5b4fc",
               borderRadius: 6,
-              padding: "4px 10px",
-              fontSize: 12,
+              padding: "5px 12px",
+              fontSize: 13,
               cursor: "pointer",
-              marginBottom: 10,
+              marginBottom: 12,
             }}
           >
             ← Back
           </button>
-          <div style={{ fontSize: 11, color: "#6366f1", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: "#6366f1", letterSpacing: 2, textTransform: "uppercase", marginBottom: 5 }}>
             Chain Graph
           </div>
-          <div style={{ fontSize: 14, color: "#e2e8f0", fontWeight: 700, wordBreak: "break-all" }}>
+          <div style={{ fontSize: 16, color: "#e2e8f0", fontWeight: 700, wordBreak: "break-all" }}>
             {repoName}
           </div>
         </div>
 
+        {/* ── COLOR LEGEND ── */}
+        <div style={{
+          padding: "14px 18px",
+          borderBottom: "1px solid rgba(99,102,241,0.15)",
+          background: "rgba(99,102,241,0.04)",
+        }}>
+          <div style={{ fontSize: 11, color: "#64748b", letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>
+            Legend
+          </div>
+
+          {/* Node types */}
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 11, color: "#475569", marginBottom: 6, letterSpacing: 1 }}>NODE TYPE</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 16, height: 16, borderRadius: "50%",
+                  background: "#6366f1",
+                  boxShadow: "0 0 6px rgba(99,102,241,0.5)",
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontSize: 13, color: "#94a3b8" }}>Dependency node</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ position: "relative", width: 20, height: 20, flexShrink: 0 }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: "50%",
+                    background: "#ef4444",
+                    boxShadow: "0 0 8px rgba(239,68,68,0.5)",
+                    position: "absolute",
+                  }} />
+                  <div style={{
+                    width: 26, height: 26, borderRadius: "50%",
+                    border: "1.5px solid #ef4444",
+                    opacity: 0.5,
+                    position: "absolute",
+                    top: -3, left: -3,
+                  }} />
+                </div>
+                <span style={{ fontSize: 13, color: "#94a3b8", marginLeft: 4 }}>Vulnerability node (ringed)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Severity colors */}
+          <div>
+            <div style={{ fontSize: 11, color: "#475569", marginBottom: 6, letterSpacing: 1 }}>SEVERITY COLOR</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {["CRITICAL", "HIGH", "MEDIUM", "LOW"].map(s => (
+                <div key={s} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{
+                    width: 16, height: 16, borderRadius: "50%",
+                    background: SEV[s].color,
+                    boxShadow: `0 0 7px ${SEV[s].color}88`,
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 13, color: SEV[s].color, fontWeight: 600, minWidth: 64 }}>{s}</span>
+                  <span style={{ fontSize: 11, color: "#475569" }}>vulnerability</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Link types */}
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontSize: 11, color: "#475569", marginBottom: 6, letterSpacing: 1 }}>LINK TYPE</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 28, height: 2, background: "#6366f166", borderRadius: 2, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#94a3b8" }}>Safe dependency path</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 28, height: 2.5, background: "#ef4444aa", borderRadius: 2, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#94a3b8" }}>Critical / High path</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Filter tabs */}
-        <div style={{ display: "flex", gap: 4, padding: "10px 12px", borderBottom: "1px solid rgba(99,102,241,0.1)", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 4, padding: "12px 14px", borderBottom: "1px solid rgba(99,102,241,0.1)", flexWrap: "wrap" }}>
           {["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map(f => (
             <button
               key={f}
@@ -307,8 +382,8 @@ const ChainGraph = () => {
                   ? (f === "ALL" ? "#a5b4fc" : SEV[f]?.color)
                   : "#94a3b8",
                 borderRadius: 5,
-                padding: "3px 8px",
-                fontSize: 10,
+                padding: "4px 10px",
+                fontSize: 12,
                 fontWeight: 700,
                 cursor: "pointer",
                 letterSpacing: 0.5,
@@ -320,9 +395,9 @@ const ChainGraph = () => {
         </div>
 
         {/* Chain list */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "8px 8px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "10px 10px" }}>
           {filteredChains.length === 0 ? (
-            <div style={{ color: "#64748b", fontSize: 12, textAlign: "center", marginTop: 40 }}>
+            <div style={{ color: "#64748b", fontSize: 13, textAlign: "center", marginTop: 40 }}>
               No chains found for this filter.
             </div>
           ) : (
@@ -341,22 +416,22 @@ const ChainGraph = () => {
                       : "rgba(255,255,255,0.03)",
                     border: `1px solid ${isActive ? SEV[sev]?.color + "66" : "rgba(255,255,255,0.07)"}`,
                     borderRadius: 8,
-                    padding: "10px 12px",
-                    marginBottom: 6,
+                    padding: "12px 14px",
+                    marginBottom: 7,
                     cursor: "pointer",
                     transition: "all 0.15s",
                   }}
                 >
                   {/* Severity + length */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
                     <SevBadge sev={sev} />
-                    <span style={{ fontSize: 10, color: "#64748b" }}>
+                    <span style={{ fontSize: 12, color: "#64748b" }}>
                       {chain.length} hops
                     </span>
                   </div>
 
                   {/* Root → vuln summary */}
-                  <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>
                     <span style={{ color: "#6366f1" }}>
                       {(root?.label || chain[0]).slice(0, 22)}
                     </span>
@@ -373,7 +448,7 @@ const ChainGraph = () => {
 
         {/* Stats footer */}
         <div style={{
-          padding: "12px 16px",
+          padding: "14px 16px",
           borderTop: "1px solid rgba(99,102,241,0.15)",
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
@@ -384,10 +459,10 @@ const ChainGraph = () => {
               background: SEV[s].color + "11",
               border: `1px solid ${SEV[s].color}33`,
               borderRadius: 6,
-              padding: "6px 10px",
+              padding: "8px 12px",
             }}>
-              <div style={{ fontSize: 10, color: SEV[s].color, letterSpacing: 1 }}>{s}</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: SEV[s].color }}>
+              <div style={{ fontSize: 11, color: SEV[s].color, letterSpacing: 1 }}>{s}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: SEV[s].color }}>
                 {counts[s] || 0}
               </div>
             </div>
@@ -395,7 +470,6 @@ const ChainGraph = () => {
         </div>
       </div>
 
-      {/* ══ MAIN GRAPH AREA ══ */}
       <div style={{ flex: 1, position: "relative" }}>
 
         {/* Top bar with active chain info */}
@@ -409,15 +483,15 @@ const ChainGraph = () => {
             backdropFilter: "blur(12px)",
             border: `1px solid ${SEV[activeVuln?.severity || "LOW"]?.color}55`,
             borderRadius: 10,
-            padding: "8px 18px",
+            padding: "10px 20px",
             zIndex: 20,
             display: "flex",
             alignItems: "center",
-            gap: 12,
+            gap: 14,
             maxWidth: "70%",
           }}>
             <SevBadge sev={activeVuln?.severity} />
-            <div style={{ fontSize: 12, color: "#94a3b8" }}>
+            <div style={{ fontSize: 13, color: "#94a3b8" }}>
               {activeChain.map((id, i) => (
                 <span key={id}>
                   <span style={{ color: i === activeChain.length - 1 ? SEV[activeVuln?.severity]?.color : "#6366f1" }}>
@@ -432,31 +506,47 @@ const ChainGraph = () => {
           </div>
         )}
 
-        {/* Legend */}
+        {/* ══ TOP RIGHT LEGEND ══ */}
         <div style={{
           position: "absolute",
-          bottom: 20,
+          top: 16,
           right: 20,
-          background: "rgba(8,10,18,0.8)",
+          background: "rgba(8,10,18,0.85)",
+          backdropFilter: "blur(12px)",
           border: "1px solid rgba(99,102,241,0.2)",
-          borderRadius: 8,
-          padding: "10px 14px",
+          borderRadius: 10,
+          padding: "12px 16px",
           zIndex: 20,
-          fontSize: 11,
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
         }}>
-          <div style={{ color: "#64748b", marginBottom: 6, letterSpacing: 1, fontSize: 10 }}>LEGEND</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#6366f1" }} />
-              <span style={{ color: "#94a3b8" }}>Dependency</span>
-            </div>
-            {["CRITICAL", "HIGH", "MEDIUM", "LOW"].map(s => (
-              <div key={s} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 12, height: 12, borderRadius: "50%", background: SEV[s].color }} />
-                <span style={{ color: SEV[s].color }}>{s} vuln</span>
-              </div>
-            ))}
+          {/* Dependency */}
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <div style={{
+              width: 13, height: 13, borderRadius: "50%",
+              background: "#6366f1",
+              boxShadow: "0 0 6px rgba(99,102,241,0.6)",
+              flexShrink: 0,
+            }} />
+            <span style={{ fontSize: 12, color: "#94a3b8" }}>Dependency</span>
           </div>
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 20, background: "rgba(99,102,241,0.2)" }} />
+
+          {/* Severity colors */}
+          {["CRITICAL", "HIGH", "MEDIUM", "LOW"].map(s => (
+            <div key={s} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <div style={{
+                width: 13, height: 13, borderRadius: "50%",
+                background: SEV[s].color,
+                boxShadow: `0 0 7px ${SEV[s].color}99`,
+                flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 12, color: SEV[s].color, fontWeight: 600 }}>{s}</span>
+            </div>
+          ))}
         </div>
 
         {/* Hover detail card */}
@@ -468,18 +558,18 @@ const ChainGraph = () => {
             background: "rgba(8,10,18,0.9)",
             border: `1px solid ${hoverNode.isVuln ? SEV[hoverNode.severity]?.color + "66" : "rgba(99,102,241,0.3)"}`,
             borderRadius: 8,
-            padding: "10px 14px",
+            padding: "12px 16px",
             zIndex: 20,
-            maxWidth: 280,
+            maxWidth: 300,
           }}>
-            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 5 }}>
               {hoverNode.isVuln ? "🔴 VULNERABILITY" : "📦 DEPENDENCY"} — hop {hoverNode.depth + 1}
             </div>
-            <div style={{ fontSize: 13, color: hoverNode.color, wordBreak: "break-all", fontWeight: 700 }}>
+            <div style={{ fontSize: 14, color: hoverNode.color, wordBreak: "break-all", fontWeight: 700 }}>
               {hoverNode.label}
             </div>
             {hoverNode.isVuln && (
-              <div style={{ marginTop: 6 }}>
+              <div style={{ marginTop: 7 }}>
                 <SevBadge sev={hoverNode.severity} />
               </div>
             )}
@@ -499,8 +589,8 @@ const ChainGraph = () => {
             zIndex: 5,
           }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
-            <div style={{ fontSize: 16, color: "#94a3b8" }}>No vulnerability chains found!</div>
-            <div style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>This repo has no dep → vuln paths.</div>
+            <div style={{ fontSize: 18, color: "#94a3b8" }}>No vulnerability chains found!</div>
+            <div style={{ fontSize: 13, color: "#475569", marginTop: 6 }}>This repo has no dep → vuln paths.</div>
           </div>
         )}
 
