@@ -158,7 +158,7 @@ const Login = () => {
           {/* branding text over canvas */}
           <div className="absolute bottom-8 left-0 right-0 z-20 text-center pointer-events-none">
             <p className="text-xs font-semibold tracking-[0.2em] text-cyan-400/60 uppercase">
-              GitGraph
+              GraphGuardians
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
               Repository analysis, visualised
@@ -173,7 +173,7 @@ const Login = () => {
             <h1 className="text-3xl font-bold sm:text-4xl">
               Welcome back
               <br />
-              <span className="text-cyan-400">Log in to GitGraph</span>
+              <span className="text-cyan-400">Log in to GraphGuardians</span>
             </h1>
 
             <p className="mb-8 mt-4 text-slate-400">

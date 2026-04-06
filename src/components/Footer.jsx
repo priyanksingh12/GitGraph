@@ -38,7 +38,7 @@ const Footer = () => {
       <div className="mx-auto grid max-w-7xl gap-16 px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-10">
         <div>
           <h3 className="mb-4 text-3xl font-bold tracking-tight text-white">
-            GitGraph
+            GraphGuardians
           </h3>
 
           <p className="text-base leading-relaxed text-slate-400">

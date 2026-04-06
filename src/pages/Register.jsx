@@ -189,7 +189,7 @@ const Register = () => {
           {/* branding text over canvas */}
           <div className="absolute bottom-8 left-0 right-0 z-20 text-center pointer-events-none">
             <p className="text-xs font-semibold tracking-[0.2em] text-cyan-400/60 uppercase">
-              GitGraph
+              GraphGuardians
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
               Repository analysis, visualised
@@ -201,7 +201,7 @@ const Register = () => {
         <div className="flex items-center justify-center p-6 sm:p-10">
           <div className="w-full max-w-xl">
             <h1 className="text-3xl font-bold sm:text-4xl">
-              Join GitGraph
+              Join GraphGuardians
               <br />
               <span className="text-cyan-400">Create your account</span>
             </h1>

@@ -87,7 +87,7 @@ export default function AnalyzingScreen({ repoId, onComplete }) {
             <line x1="6.5" y1="10" x2="15.5" y2="6"  stroke="#22d3ee" strokeWidth="1.2" strokeOpacity="0.4" />
             <line x1="6.5" y1="12" x2="15.5" y2="16" stroke="#22d3ee" strokeWidth="1.2" strokeOpacity="0.4" />
           </svg>
-          <span className="font-black text-white tracking-tight text-base">GitGraph</span>
+          <span className="font-black text-white tracking-tight text-base">GraphGuardians</span>
         </div>
         <div className="hidden sm:block">
           <span className="text-[11px] font-mono text-slate-600 tracking-widest uppercase">Analysis in progress</span>
@@ -209,7 +209,7 @@ export default function AnalyzingScreen({ repoId, onComplete }) {
                 <span className="w-3 h-3 rounded-full bg-emerald-500/60" />
               </div>
               <span className="text-[11px] font-mono text-slate-600">
-                gitgraph — scan {repoId ? `· ${repoId.slice(0, 8)}…` : ""}
+                GraphGuardians — scan {repoId ? `· ${repoId.slice(0, 8)}…` : ""}
               </span>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
@@ -221,7 +221,7 @@ export default function AnalyzingScreen({ repoId, onComplete }) {
             <div className="flex-1 bg-[#030f20] p-5 sm:p-7 font-mono text-sm overflow-auto">
               {/* Prompt */}
               <p className="text-slate-600 mb-5 text-xs sm:text-sm">
-                <span className="text-cyan-600">❯</span> gitgraph scan --repo {repoId || "project"} --deep --ai
+                <span className="text-cyan-600">❯</span> GraphGuardians scan --repo {repoId || "project"} --deep --ai
               </p>
 
               <div className="space-y-0 divide-y divide-white/[0.04]">
@@ -275,7 +275,7 @@ export default function AnalyzingScreen({ repoId, onComplete }) {
 
           {/* Footer */}
           <p className="text-[10px] text-slate-700 font-mono mt-4 text-center tracking-widest uppercase">
-           • Git‑Graph
+           • GraphGuardians
           </p>
         </motion.div>
 

@@ -170,7 +170,7 @@ export default function Landing() {
                   <path d="M9.5 11.5L11.2 13.2L14.8 9.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <p className="text-lg font-bold tracking-wide sm:text-xl">GitGraph</p>
+              <p className="text-lg font-bold tracking-wide sm:text-xl">GraphGuardians</p>
             </motion.div>
 
             <motion.div
