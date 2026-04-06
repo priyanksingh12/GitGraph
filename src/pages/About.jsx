@@ -453,71 +453,7 @@ export default function About() {
             <SeverityBadge level="Low" color="#22c55e" />
           </div>
 
-          {/* CTA buttons */}
-          <div
-            style={{
-              display: "flex",
-              gap: "16px",
-              marginTop: "48px",
-              animation: loaded ? "fadeUp 0.7s ease both" : "none",
-              animationDelay: "320ms",
-              opacity: loaded ? undefined : 0,
-            }}
-          >
-            <button
-              style={{
-                padding: "13px 32px",
-                borderRadius: "10px",
-                background: "#3b82f6",
-                color: "#fff",
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: 500,
-                fontSize: "0.92rem",
-                border: "none",
-                cursor: "pointer",
-                letterSpacing: "0.01em",
-                transition: "background 0.2s, transform 0.15s",
-                boxShadow: "0 0 24px rgba(59,130,246,0.35)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#2563eb";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#3b82f6";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              View Dashboard →
-            </button>
-            <button
-              style={{
-                padding: "13px 32px",
-                borderRadius: "10px",
-                background: "transparent",
-                color: "#94a3b8",
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: 500,
-                fontSize: "0.92rem",
-                border: "1px solid rgba(255,255,255,0.1)",
-                cursor: "pointer",
-                letterSpacing: "0.01em",
-                transition: "border-color 0.2s, color 0.2s, transform 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
-                e.currentTarget.style.color = "#e2e8f0";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                e.currentTarget.style.color = "#94a3b8";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              Read the Docs
-            </button>
-          </div>
+         
         </section>
 
         {/* HOW IT WORKS */}

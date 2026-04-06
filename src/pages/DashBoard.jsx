@@ -573,11 +573,11 @@ const Dashboard = () => {
           </div>
           <nav className="space-y-1 text-sm">
             {[
-              { label:"Dashboard",       icon:"📊", active:true,  action:()=>{} },
-              { label:"Vulnerabilities", icon:"⚠️",  active:false, action:()=>navigate(`/vulnerabilities/${selectedRepoId}`) },
-              { label:"Chain Graph",     icon:"🕸",  active:false, action:()=>navigate(`/chain/${selectedRepoId}`) },
-              { label:"Comparison",      icon:"📈",  active:false, action:()=>navigate(`/comparison/${selectedRepoId}`) },
-              { label:"Commits",         icon:"📝",  active:false, action:()=>navigate(`/commits/${selectedRepoId}`) },
+              { label:"Dashboard",        active:true,  action:()=>{} },
+              { label:"Vulnerabilities",  active:false, action:()=>navigate(`/vulnerabilities/${selectedRepoId}`) },
+              { label:"Chain Graph",       active:false, action:()=>navigate(`/chain/${selectedRepoId}`) },
+              { label:"Comparison",      active:false, action:()=>navigate(`/comparison/${selectedRepoId}`) },
+              { label:"Rescan", active:false, action:handleRescan },
             ].map(item=>(
               <button key={item.label} onClick={item.action}
                 className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition ${
@@ -586,12 +586,7 @@ const Dashboard = () => {
                 <span>{item.icon}</span>{item.label}
               </button>
             ))}
-            <div className="pt-2 border-t border-[#1a2240] mt-2">
-              <button onClick={handleRescan}
-                className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 text-green-400 hover:bg-green-500/10 transition text-sm">
-                <span>🔄</span> Rescan
-              </button>
-            </div>
+            
           </nav>
         </div>
         <div className="border-t border-[#1a2240] pt-4">
@@ -634,10 +629,7 @@ const Dashboard = () => {
                 </span>
               ))}
             </div>
-            <button onClick={handleRescan}
-              className="px-4 py-2 rounded-xl bg-green-500/10 text-green-300 border border-green-500/25 hover:bg-green-500/20 hover:scale-105 transition text-sm">
-              🔄 Rescan
-            </button>
+           
             <button onClick={handleBack}
               className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#00cdd4]/10 to-[#3b82f6]/10 text-[#00cdd4] border border-[#00cdd4]/25 hover:from-[#00cdd4]/20 hover:to-[#3b82f6]/20 hover:scale-105 transition text-sm">
               ← Back
@@ -691,96 +683,78 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* VULNS + ALERTS */}
-          <div className="grid md:grid-cols-3 gap-6">
-            <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
-              className="md:col-span-2 bg-[#0d1225] p-8 rounded-2xl border border-[#1a2240]">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold">Recent Vulnerabilities</h2>
-                <button onClick={()=>navigate(`/vulnerabilities/${selectedRepoId}`)}
-                  className="text-xs text-cyan-400 border border-cyan-400/30 px-3 py-1.5 rounded-lg hover:bg-cyan-400/10 transition">
-                  View All →
-                </button>
-              </div>
-              <div className="space-y-3">
-                {topVulns.length===0 ? (
-                  <div className="text-center py-8 text-[#6b7fa3]">
-                    <p className="text-2xl mb-2">✅</p>
-                    <p className="text-sm">No vulnerabilities found!</p>
-                  </div>
-                ) : topVulns.map((v,i)=>(
-                  <motion.div key={i} initial={{opacity:0,x:-10}} animate={{opacity:1,x:0}} transition={{delay:i*0.05}}
-                    className="flex items-center justify-between p-3 rounded-xl bg-[#0b1022] border border-[#1a2240] hover:border-[#2a3460] transition">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-1.5 h-10 rounded-full flex-shrink-0" style={{background:
-                        v.severity==="CRITICAL"?"#ef4444":v.severity==="HIGH"?"#f97316":v.severity==="MEDIUM"?"#eab308":"#22c55e"}}/>
-                      <div className="min-w-0">
-                        <p className="text-sm font-mono font-semibold text-white truncate">{v.package}</p>
-                        <p className="text-xs text-[#6b7fa3] truncate">{v.cve||v.id||"CVE unknown"}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                      <p className="text-xs text-[#6b7fa3] hidden sm:block max-w-[160px] truncate">{v.fix}</p>
-                      <SevBadge sev={v.severity}/>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+         {/* TOP VULNERABILITIES */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="bg-[#0d1225] p-8 rounded-2xl border border-[#1a2240]"
+>
+  <div className="flex justify-between items-center mb-6">
+    <h2 className="text-lg font-semibold">Top Vulnerabilities</h2>
+    <button
+      onClick={() => navigate(`/vulnerabilities/${selectedRepoId}`)}
+      className="text-xs text-cyan-400 border border-cyan-400/30 px-3 py-1.5 rounded-lg hover:bg-cyan-400/10 transition"
+    >
+      View All →
+    </button>
+  </div>
 
-            {/* Alert summary */}
-            <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
-              className="bg-[#0d1225] p-8 rounded-2xl border border-[#1a2240] flex flex-col justify-between">
-              <div>
-                <h2 className="text-lg font-semibold mb-4">Security Alerts</h2>
-                <div className="space-y-3">
-                  {[{label:"Critical",count:sevCounts.CRITICAL||0,color:"#ef4444"},
-                    {label:"High",    count:sevCounts.HIGH||0,    color:"#f97316"},
-                    {label:"Medium",  count:sevCounts.MEDIUM||0,  color:"#eab308"},
-                    {label:"Low",     count:sevCounts.LOW||0,     color:"#22c55e"}
-                  ].map(item=>(
-                    <div key={item.label} className="flex justify-between items-center">
-                      <span className="text-sm text-[#8899bb]">{item.label}</span>
-                      <span className="text-sm font-bold" style={{color:item.color}}>{item.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-6 text-center">
-                <p className="text-5xl font-bold" style={{color:dashboardData.vulnerabilities>0?"#ef4444":"#22c55e"}}>
-                  {dashboardData.vulnerabilities}
+  {topVulns.length === 0 ? (
+    <p className="text-[#6b7fa3] text-sm text-center py-6">
+      No vulnerabilities found.
+    </p>
+  ) : (
+    <div className="space-y-3">
+      {topVulns.map((v, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.05 }}
+          className="flex items-center p-3 rounded-xl bg-[#0b1022] border border-[#1a2240] hover:border-[#2a3460] transition"
+        >
+          <div className="flex items-center w-full">
+
+            {/* LEFT — package name + CVE */}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div
+                className="w-1.5 h-10 rounded-full flex-shrink-0"
+                style={{
+                  background:
+                    v.severity === "CRITICAL" ? "#ef4444" :
+                    v.severity === "HIGH"     ? "#f97316" :
+                    v.severity === "MEDIUM"   ? "#eab308" :
+                                               "#22c55e",
+                }}
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-mono font-semibold text-white truncate">
+                  {v.package}
                 </p>
-                <p className="text-[#6b7fa3] text-sm mt-1">Total Alerts</p>
+                <p className="text-xs text-[#6b7fa3] truncate">
+                  {v.cve || v.id || "CVE unknown"}
+                </p>
               </div>
-            </motion.div>
+            </div>
+
+            {/* CENTER — fix command (desktop only) */}
+            <div className="flex-1 text-center hidden md:block">
+              <p className="text-xs font-mono text-cyan-400 truncate">
+                {v.fix}
+              </p>
+            </div>
+
+            {/* RIGHT — severity badge */}
+            <div className="flex justify-end flex-1">
+              <SevBadge sev={v.severity} />
+            </div>
+
           </div>
-
-          {/* TOP EXPOSURES */}
-          {topVulns.length > 0 && (
-            <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
-              className="bg-[#0d1225] p-8 rounded-2xl border border-[#1a2240]">
-              <h2 className="text-lg font-semibold mb-6">Top Exposures</h2>
-              <div className="space-y-5">
-                {topVulns.map((v,i)=>{
-                  const pct = v.severity==="CRITICAL"?95:v.severity==="HIGH"?75:v.severity==="MEDIUM"?50:25;
-                  const col = v.severity==="CRITICAL"?"#ef4444":v.severity==="HIGH"?"#f97316":v.severity==="MEDIUM"?"#eab308":"#22c55e";
-                  return (
-                    <div key={i}>
-                      <div className="flex justify-between mb-1.5 text-sm">
-                        <span className="font-mono text-white">{v.package}</span>
-                        <SevBadge sev={v.severity}/>
-                      </div>
-                      <div className="w-full h-2 rounded-full bg-[#1a2240] overflow-hidden">
-                        <motion.div initial={{width:0}} animate={{width:`${pct}%`}} transition={{duration:0.8,delay:i*0.1}}
-                          className="h-full rounded-full" style={{backgroundColor:col}}/>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-
+        </motion.div>
+      ))}
+    </div>
+  )}
+</motion.div>
           
 {/* AI INSIGHTS */}
 <AIInsightsCard
