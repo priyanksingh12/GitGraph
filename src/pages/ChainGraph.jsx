@@ -4,9 +4,6 @@ import ForceGraph2D from "react-force-graph-2d";
 import API from "../api";
 import Background from "../components/BackgroundCanvas";
 
-/* ═══════════════════════════════════════════════
-   SEVERITY CONFIG
-═══════════════════════════════════════════════ */
 const SEV = {
   CRITICAL: { color: "#ff2d55", glow: "rgba(255,45,85,0.45)",   label: "CRITICAL", order: 0, pulse: true  },
   HIGH:     { color: "#ff9f0a", glow: "rgba(255,159,10,0.38)",  label: "HIGH",     order: 1, pulse: true  },
@@ -14,20 +11,13 @@ const SEV = {
   LOW:      { color: "#30d158", glow: "rgba(48,209,88,0.28)",   label: "LOW",      order: 3, pulse: false },
 };
 
-/* ═══════════════════════════════════════════════
-   NORMALIZE — "pkg/node_modules/ms" → "ms"
-═══════════════════════════════════════════════ */
 const normalizeName = (raw) => {
   if (!raw) return "";
   const parts = raw.split("node_modules/");
   return parts[parts.length - 1].replace(/\/$/, "").toLowerCase().trim();
 };
 
-/* ═══════════════════════════════════════════════
-   BUILD CHAINS — fixed traversal with normalized IDs
-═══════════════════════════════════════════════ */
 function buildChains(rawNodes, rawEdges) {
-  // Build nodeMap with BOTH original and normalized IDs
   const nodeMap = {};
   rawNodes.forEach(n => {
     nodeMap[n.id] = n;
@@ -35,21 +25,35 @@ function buildChains(rawNodes, rawEdges) {
     if (norm && norm !== n.id) nodeMap[norm] = { ...n, id: norm, label: n.label || norm };
   });
 
-  // Reverse adjacency using normalized IDs
-  const rev = {};
+  // ✅ FIX: both DEPENDS_ON and HAS_VULNERABILITY edges handle karo
+  const fwd = {}; // forward: from → [to]  (for dep→dep)
+  const rev = {}; // reverse: to → [from]  (for chain tracing)
+
   rawEdges.forEach(e => {
-    const from = normalizeName(e.from) || e.from;
-    const to   = normalizeName(e.to)   || e.to;
+    const from = normalizeName(e.from_id || e.from) || (e.from_id || e.from);
+    const to   = normalizeName(e.to_id   || e.to)   || (e.to_id   || e.to);
     if (!from || !to || from === to) return;
+
+    if (!fwd[from]) fwd[from] = new Set();
+    fwd[from].add(to);
+
     if (!rev[to]) rev[to] = new Set();
     rev[to].add(from);
   });
-  // Convert Sets to arrays
+
   Object.keys(rev).forEach(k => (rev[k] = [...rev[k]]));
 
-  const vulnNodes = rawNodes.filter(n => n.type === "vulnerability");
-  const chains    = [];
-  const MAX_DEPTH = 20;
+  // ✅ FIX: vuln nodes = nodes whose to_type is Vulnerability OR type is vulnerability
+  const vulnNodes = rawNodes.filter(n =>
+    n.type === "vulnerability" ||
+    rawEdges.some(e => (e.to_id || e.to) === n.id && e.to_type === "Vulnerability")
+  );
+
+  console.log("🔍 Vuln nodes found:", vulnNodes.length);
+  console.log("🔍 Rev map keys sample:", Object.keys(rev).slice(0, 5));
+
+  const chains  = [];
+  const MAX_DEPTH = 25;
 
   vulnNodes.forEach(vuln => {
     const vulnId = normalizeName(vuln.id) || vuln.id;
@@ -58,40 +62,53 @@ function buildChains(rawNodes, rawEdges) {
       if (depth > MAX_DEPTH) return;
       const normId  = normalizeName(id) || id;
       const parents = rev[normId] || rev[id] || [];
+
       if (parents.length === 0) {
+        // ✅ Accept chains of length >= 2 (dep → vuln minimum)
         if (path.length >= 2) chains.push([...path].reverse());
         return;
       }
+
       parents.forEach(p => {
-        if (!path.includes(p)) trace(p, [...path, p], depth + 1);
+        const normP = normalizeName(p) || p;
+        if (!path.includes(normP) && !path.includes(p)) {
+          trace(normP, [...path, normP], depth + 1);
+        }
       });
     };
 
     trace(vulnId, [vulnId], 0);
   });
 
+  console.log("🔗 Raw chains built:", chains.length);
+
+  // Dedup
   const seen = new Set();
-  return chains
-    .filter(c => {
-      const key = c.join("→");
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .sort((a, b) => {
-      const getOrder = c => SEV[nodeMap[c[c.length - 1]]?.severity]?.order ?? 9;
-      return getOrder(a) - getOrder(b);
-    });
+  const unique = chains.filter(c => {
+    const key = c.join("→");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // Sort by severity then chain length (longer chains first)
+  return unique.sort((a, b) => {
+    const getOrder = c => {
+      const id  = c[c.length - 1];
+      const node = nodeMap[id] || nodeMap[normalizeName(id)];
+      return SEV[node?.severity]?.order ?? 9;
+    };
+    const orderDiff = getOrder(a) - getOrder(b);
+    if (orderDiff !== 0) return orderDiff;
+    return b.length - a.length; // longer chains first
+  });
 }
 
-/* ═══════════════════════════════════════════════
-   CHAIN → GRAPH DATA
-═══════════════════════════════════════════════ */
 function chainToGraph(chain, nodeMap) {
   const nodes = chain.map((id, i) => {
     const norm = normalizeName(id);
     const raw  = nodeMap[id] || nodeMap[norm] || {};
-    const isVuln = raw.type === "vulnerability";
+    const isVuln = raw.type === "vulnerability" || i === chain.length - 1;
     const sev    = raw.severity;
     const cfg    = SEV[sev];
     return {
@@ -109,37 +126,24 @@ function chainToGraph(chain, nodeMap) {
   return { nodes, links };
 }
 
-/* ═══════════════════════════════════════════════
-   SEVERITY BADGE
-═══════════════════════════════════════════════ */
 const SevBadge = ({ sev, size = "sm" }) => {
   const c   = SEV[sev] || SEV.LOW;
   const fs  = size === "lg" ? 13 : 10;
   const pad = size === "lg" ? "3px 12px" : "2px 7px";
   return (
     <span style={{
-      background:   c.color + "18",
-      color:        c.color,
-      border:       `1px solid ${c.color}55`,
-      borderRadius: 5,
-      fontSize:     fs,
-      fontWeight:   800,
-      padding:      pad,
-      letterSpacing: 1.5,
-      fontFamily:   "'JetBrains Mono', monospace",
+      background: c.color + "18", color: c.color,
+      border: `1px solid ${c.color}55`, borderRadius: 5,
+      fontSize: fs, fontWeight: 800, padding: pad,
+      letterSpacing: 1.5, fontFamily: "'JetBrains Mono', monospace",
     }}>
       {c.label}
     </span>
   );
 };
 
-/* ═══════════════════════════════════════════════
-   ANIMATED SCAN LINE (pure CSS via style tag)
-═══════════════════════════════════════════════ */
 const GlobalStyles = () => (
   <style>{`
-    
-
     @keyframes pulseRing {
       0%   { transform: scale(1);   opacity: 0.8; }
       70%  { transform: scale(2.2); opacity: 0;   }
@@ -161,35 +165,21 @@ const GlobalStyles = () => (
       0%   { background-position: -400px 0; }
       100% { background-position: 400px 0;  }
     }
-    @keyframes glowPulse {
-      0%, 100% { box-shadow: 0 0 12px currentColor; }
-      50%       { box-shadow: 0 0 28px currentColor; }
-    }
     @keyframes gridScroll {
-      0%   { background-position: 0 0;    }
+      0%   { background-position: 0 0;       }
       100% { background-position: 40px 40px; }
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes dash {
-      to { stroke-dashoffset: -20; }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .chain-card:hover { transform: translateX(3px); }
     .chain-card { transition: all 0.18s cubic-bezier(.4,0,.2,1); }
-
     .sidebar-scroll::-webkit-scrollbar        { width: 3px; }
     .sidebar-scroll::-webkit-scrollbar-track  { background: transparent; }
     .sidebar-scroll::-webkit-scrollbar-thumb  { background: rgba(99,102,241,0.25); border-radius: 10px; }
-
     .fade-in   { animation: fadeSlideIn   0.45s cubic-bezier(.4,0,.2,1) forwards; }
     .fade-left { animation: fadeSlideLeft 0.4s  cubic-bezier(.4,0,.2,1) forwards; }
-
     .metric-card { transition: all 0.2s; }
     .metric-card:hover { transform: scale(1.03); }
-
-    /* Animated grid bg */
     .grid-bg {
       background-image:
         linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
@@ -197,8 +187,6 @@ const GlobalStyles = () => (
       background-size: 40px 40px;
       animation: gridScroll 8s linear infinite;
     }
-
-    /* Shimmer loading bar */
     .shimmer {
       background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
       background-size: 400px 100%;
@@ -207,23 +195,16 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-/* ═══════════════════════════════════════════════
-   SIDEBAR CONSTANTS
-═══════════════════════════════════════════════ */
 const SIDEBAR_MIN     = 260;
 const SIDEBAR_MAX     = 540;
 const SIDEBAR_DEFAULT = 340;
 
-/* ═══════════════════════════════════════════════
-   MAIN COMPONENT
-═══════════════════════════════════════════════ */
 const ChainGraph = () => {
   const { repoId } = useParams();
   const navigate   = useNavigate();
   const fgRef      = useRef();
-  const tickRef    = useRef(0);   // for pulse animation frame
+  const tickRef    = useRef(0);
 
-  /* state */
   const [loading,      setLoading]      = useState(true);
   const [repoName,     setRepoName]     = useState("Repository");
   const [chains,       setChains]       = useState([]);
@@ -237,7 +218,6 @@ const ChainGraph = () => {
   const [statsAnim,    setStatsAnim]    = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
 
-  /* drag resize */
   const isDragging  = useRef(false);
   const dragStartX  = useRef(0);
   const dragStartW  = useRef(SIDEBAR_DEFAULT);
@@ -259,8 +239,8 @@ const ChainGraph = () => {
     };
     const onUp = () => {
       if (!isDragging.current) return;
-      isDragging.current            = false;
-      document.body.style.cursor    = "";
+      isDragging.current             = false;
+      document.body.style.cursor     = "";
       document.body.style.userSelect = "";
     };
     window.addEventListener("mousemove", onMove);
@@ -278,7 +258,12 @@ const ChainGraph = () => {
         const res  = await API.get(`/api/graph/${repoId}?type=chain`);
         const data = res.data;
 
-        // Build nodeMap with normalized IDs too
+        console.log("📦 Graph data:", {
+          nodes: data.nodes?.length,
+          edges: data.edges?.length,
+          edgeSample: data.edges?.slice(0, 3),
+        });
+
         const nm = {};
         data.nodes?.forEach(n => {
           nm[n.id] = n;
@@ -293,6 +278,9 @@ const ChainGraph = () => {
         setRepoName(rn?.label || "Repository");
 
         const built = buildChains(data.nodes || [], data.edges || []);
+        console.log("🔗 Chains built:", built.length);
+        console.log("🔗 Chain sample:", built.slice(0, 2));
+
         setChains(built);
         if (built.length > 0) {
           setGraphData(chainToGraph(built[0], nm));
@@ -306,53 +294,55 @@ const ChainGraph = () => {
     })();
   }, [repoId]);
 
-  /* ── select chain ── */
-  const selectChain = useCallback((idx) => {
-    setActiveIdx(idx);
-    setSelectedNode(null);
-    setGraphData(chainToGraph(filteredChains[idx], nodeMap)); // eslint-disable-line
-    setTimeout(() => fgRef.current?.zoomToFit(700, 90), 320);
-  }, [nodeMap]); // filteredChains computed below
-
   /* ── filter ── */
   const filteredChains = useMemo(() => {
     if (filter === "ALL") return chains;
-    return chains.filter(c => nodeMap[c[c.length - 1]]?.severity === filter
-      || nodeMap[normalizeName(c[c.length - 1])]?.severity === filter);
+    return chains.filter(c => {
+      const id  = c[c.length - 1];
+      const sev = nodeMap[id]?.severity
+               || nodeMap[normalizeName(id)]?.severity;
+      return sev === filter;
+    });
   }, [chains, filter, nodeMap]);
 
-  /* ── counts ── */
+  /* ✅ FIX: selectChain — filteredChains + nodeMap both in deps, passed as params */
+  const selectChain = useCallback((idx, fc, nm) => {
+    setActiveIdx(idx);
+    setSelectedNode(null);
+    const chain = fc[idx];
+    if (chain) {
+      setGraphData(chainToGraph(chain, nm));
+      setTimeout(() => fgRef.current?.zoomToFit(700, 90), 320);
+    }
+  }, []);
+
   const counts = useMemo(() => {
     const c = { ALL: chains.length };
     chains.forEach(ch => {
       const id  = ch[ch.length - 1];
-      const sev = nodeMap[id]?.severity || nodeMap[normalizeName(id)]?.severity || "LOW";
+      const sev = nodeMap[id]?.severity
+               || nodeMap[normalizeName(id)]?.severity
+               || "LOW";
       c[sev] = (c[sev] || 0) + 1;
     });
     return c;
   }, [chains, nodeMap]);
 
-  /* ── active chain info ── */
   const activeChain = filteredChains[activeIdx] ?? filteredChains[0];
   const activeVuln  = activeChain
     ? (nodeMap[activeChain[activeChain.length - 1]]
     || nodeMap[normalizeName(activeChain[activeChain.length - 1])])
     : null;
-  const activeSev   = activeVuln?.severity || "LOW";
-  const activeCfg   = SEV[activeSev];
+  const activeSev = activeVuln?.severity || "LOW";
+  const activeCfg = SEV[activeSev];
 
-  /* ════════════════════════════════════════════
-     CANVAS: draw node
-  ════════════════════════════════════════════ */
   const drawNode = useCallback((node, ctx, globalScale) => {
-    // ✅ Guard — coordinates not ready yet (first render)
     if (!node.x || !node.y || !isFinite(node.x) || !isFinite(node.y)) return;
 
-    const t   = tickRef.current;
-    const r   = node.isVuln ? 14 : 10;
-    const x   = node.x, y = node.y;
+    const t = tickRef.current;
+    const r = node.isVuln ? 14 : 10;
+    const x = node.x, y = node.y;
 
-    // Outer glow
     const grad = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 3.5);
     grad.addColorStop(0, node.glow);
     grad.addColorStop(1, "transparent");
@@ -361,9 +351,8 @@ const ChainGraph = () => {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Pulse ring for CRITICAL/HIGH vuln nodes
     if (node.pulse && node.isVuln) {
-      const phase = ((t * 0.04 + node.depth * 0.5) % 1);
+      const phase  = ((t * 0.04 + node.depth * 0.5) % 1);
       const rPulse = r + phase * r * 2.2;
       const alpha  = (1 - phase) * 0.55;
       ctx.beginPath();
@@ -373,7 +362,6 @@ const ChainGraph = () => {
       ctx.stroke();
     }
 
-    // Secondary ring for vuln
     if (node.isVuln) {
       ctx.beginPath();
       ctx.arc(x, y, r + 5, 0, 2 * Math.PI);
@@ -382,7 +370,6 @@ const ChainGraph = () => {
       ctx.stroke();
     }
 
-    // Main circle with gradient fill
     const fill = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
     if (node.isVuln) {
       fill.addColorStop(0, node.color + "ff");
@@ -397,21 +384,18 @@ const ChainGraph = () => {
     ctx.fillStyle = fill;
     ctx.fill();
 
-    // Inner highlight ring
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
     ctx.strokeStyle = node.isVuln ? node.color + "99" : "rgba(255,255,255,0.18)";
     ctx.lineWidth   = 1;
     ctx.stroke();
 
-    // Depth number
     ctx.fillStyle    = node.isVuln ? "#0a0a0f" : "rgba(255,255,255,0.92)";
     ctx.font         = `bold ${node.isVuln ? 9 : 8}px 'JetBrains Mono', monospace`;
     ctx.textAlign    = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(node.depth + 1, x, y);
 
-    // Hover tooltip
     if (hoverNode?.id === node.id) {
       const text  = node.label.length > 34 ? node.label.slice(0, 34) + "…" : node.label;
       const fSize = Math.max(9, Math.min(12, 11 / globalScale * 1.4));
@@ -419,19 +403,13 @@ const ChainGraph = () => {
       const tw    = ctx.measureText(text).width;
       const px = 10, py = 6, bw = tw + px * 2, bh = py * 2 + 8;
       const bx = x + r + 10, by = y - bh / 2;
-
-      // Tooltip bg
       ctx.fillStyle   = "rgba(2,6,18,0.95)";
       ctx.beginPath();
       ctx.roundRect(bx, by, bw, bh, 5);
       ctx.fill();
-
-      // Tooltip border
       ctx.strokeStyle = node.color + "88";
       ctx.lineWidth   = 1;
       ctx.stroke();
-
-      // Tooltip text
       ctx.fillStyle    = "#f1f5f9";
       ctx.textAlign    = "left";
       ctx.textBaseline = "middle";
@@ -439,18 +417,13 @@ const ChainGraph = () => {
     }
   }, [hoverNode]);
 
-  /* ════════════════════════════════════════════
-     CANVAS: draw link
-  ════════════════════════════════════════════ */
   const drawLink = useCallback((link, ctx) => {
     const s = link.source, t = link.target;
-    // ✅ Guard — NaN coordinates crash createLinearGradient
     if (!s?.x || !t?.x || !isFinite(s.x) || !isFinite(s.y) || !isFinite(t.x) || !isFinite(t.y)) return;
 
     const isHot = t.severity === "CRITICAL" || t.severity === "HIGH";
     const col   = isHot ? SEV[t.severity].color : "#6366f1";
 
-    // Gradient line
     const grad = ctx.createLinearGradient(s.x, s.y, t.x, t.y);
     grad.addColorStop(0, col + (isHot ? "44" : "33"));
     grad.addColorStop(1, col + (isHot ? "cc" : "77"));
@@ -468,27 +441,19 @@ const ChainGraph = () => {
     ctx.setLineDash([]);
   }, []);
 
-  /* tick for animations */
   useEffect(() => {
     let id;
-    const tick = () => {
-      tickRef.current += 1;
-      id = requestAnimationFrame(tick);
-    };
+    const tick = () => { tickRef.current += 1; id = requestAnimationFrame(tick); };
     id = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(id);
   }, []);
 
-  /* ════════════════════════════════════════════
-     LOADING STATE
-  ════════════════════════════════════════════ */
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-[#02060f] text-white relative overflow-hidden">
       <GlobalStyles />
       <Background />
       <div className="grid-bg absolute inset-0 opacity-60" />
       <div className="relative z-10 flex flex-col items-center gap-6">
-        {/* Orbital loader */}
         <div className="relative w-20 h-20">
           <div className="absolute inset-0 rounded-full border-2 border-indigo-500/10" />
           <div className="absolute inset-0 rounded-full border-t-2 border-indigo-400"
@@ -504,14 +469,11 @@ const ChainGraph = () => {
         </div>
         <div className="text-center">
           <p className="text-slate-200 font-bold text-lg tracking-widest"
-            style={{ fontFamily: "'Syne', sans-serif" }}>
-            BUILDING CHAINS
-          </p>
+            style={{ fontFamily: "'Syne', sans-serif" }}>BUILDING CHAINS</p>
           <p className="text-indigo-400/60 text-xs mt-1 tracking-[4px] font-mono">
             ANALYZING VULNERABILITY PATHS
           </p>
         </div>
-        {/* Progress shimmer bars */}
         <div className="flex flex-col gap-2 w-48">
           {[100, 75, 55].map((w, i) => (
             <div key={i} className="h-[3px] rounded-full overflow-hidden bg-slate-800/60">
@@ -523,30 +485,18 @@ const ChainGraph = () => {
     </div>
   );
 
-  /* ════════════════════════════════════════════
-     MAIN RENDER
-  ════════════════════════════════════════════ */
   return (
     <div
       className="h-screen text-white flex overflow-hidden relative select-none"
-      style={{
-        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-        background: "#02060f",
-      }}
+      style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", background: "#02060f" }}
     >
       <GlobalStyles />
       <Background />
-
-      {/* Scrolling grid overlay */}
       <div className="grid-bg absolute inset-0 pointer-events-none opacity-40" />
-
-      {/* Vignette */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{
-          background: "radial-gradient(ellipse at center, transparent 40%, rgba(2,6,15,0.7) 100%)"
-        }} />
+        style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(2,6,15,0.7) 100%)" }} />
 
-      {/* ══════════ SIDEBAR ══════════ */}
+      {/* SIDEBAR */}
       <aside
         className="relative z-10 flex flex-col flex-shrink-0"
         style={{
@@ -559,7 +509,6 @@ const ChainGraph = () => {
           borderRight: "1px solid rgba(99,102,241,0.12)",
         }}
       >
-        {/* ── Header ── */}
         <div className="px-5 pt-5 pb-4 border-b border-white/5 flex-shrink-0">
           <button
             onClick={() => navigate(-1)}
@@ -568,28 +517,21 @@ const ChainGraph = () => {
             <span className="group-hover:-translate-x-0.5 transition-transform inline-block">←</span>
             Back
           </button>
-
-          {/* Repo pill */}
           <div className="flex items-center gap-2.5 mb-3">
             <div className="w-1.5 h-8 rounded-full"
               style={{ background: `linear-gradient(to bottom, ${activeCfg.color}, ${activeCfg.color}44)` }} />
             <div>
               <p className="text-[9px] text-indigo-400/50 tracking-[3px] uppercase mb-0.5">Chain Graph</p>
               <p className="text-[13px] text-slate-100 font-semibold truncate max-w-[220px]"
-                style={{ fontFamily: "'Syne', sans-serif" }}>
-                {repoName}
-              </p>
+                style={{ fontFamily: "'Syne', sans-serif" }}>{repoName}</p>
             </div>
           </div>
-
-          {/* Total chains badge */}
           <div className="flex items-center gap-2 mt-2">
             <span className="text-[10px] text-slate-500">Total chains detected:</span>
             <span className="text-[12px] font-bold text-indigo-300">{chains.length}</span>
           </div>
         </div>
 
-        {/* ── Severity Stats Grid ── */}
         <div className="grid grid-cols-2 gap-2 px-4 py-3 border-b border-white/5 flex-shrink-0">
           {["CRITICAL","HIGH","MEDIUM","LOW"].map((s, i) => (
             <div
@@ -611,7 +553,6 @@ const ChainGraph = () => {
                 style={{ color: SEV[s].color, fontFamily: "'Syne', sans-serif" }}>
                 {counts[s] || 0}
               </p>
-              {/* Tiny bar */}
               <div className="mt-2 h-[2px] rounded-full overflow-hidden bg-white/5">
                 <div className="h-full rounded-full transition-all duration-700"
                   style={{
@@ -623,7 +564,6 @@ const ChainGraph = () => {
           ))}
         </div>
 
-        {/* ── Filter Tabs ── */}
         <div className="flex gap-1.5 px-4 py-3 border-b border-white/5 flex-wrap flex-shrink-0">
           {["ALL","CRITICAL","HIGH","MEDIUM","LOW"].map(f => {
             const active = filter === f;
@@ -645,7 +585,6 @@ const ChainGraph = () => {
           })}
         </div>
 
-        {/* ── Chain List ── */}
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 sidebar-scroll">
           {filteredChains.length === 0 ? (
             <div className="flex flex-col items-center justify-center mt-16 gap-3 opacity-50">
@@ -671,7 +610,7 @@ const ChainGraph = () => {
                   boxShadow:  isActive ? `0 0 20px ${cfg.color}14, inset 0 1px 0 ${cfg.color}20` : "none",
                   animation:  `fadeSlideLeft 0.3s cubic-bezier(.4,0,.2,1) ${Math.min(i, 20) * 0.025}s both`,
                 }}
-                onClick={() => selectChain(i)}
+                onClick={() => selectChain(i, filteredChains, nodeMap)}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <SevBadge sev={sev} />
@@ -683,20 +622,15 @@ const ChainGraph = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Chain path preview */}
                 <div className="flex items-center gap-1 text-[10px] overflow-hidden">
                   <span className="text-indigo-400 truncate max-w-[90px]">
                     {(root?.label || normalizeName(rootId) || rootId).slice(0, 18)}
                   </span>
                   <span className="text-slate-700 flex-shrink-0 text-[8px]">→ ··· →</span>
-                  <span className="truncate max-w-[90px] font-semibold"
-                    style={{ color: cfg.color }}>
+                  <span className="truncate max-w-[90px] font-semibold" style={{ color: cfg.color }}>
                     {(vuln?.label || normalizeName(lastId) || lastId).slice(0, 18)}
                   </span>
                 </div>
-
-                {/* Mini hop dots */}
                 {isActive && (
                   <div className="flex items-center gap-1 mt-2 overflow-hidden">
                     {chain.slice(0, Math.min(chain.length, 10)).map((id, hi) => (
@@ -722,7 +656,6 @@ const ChainGraph = () => {
           })}
         </div>
 
-        {/* ── Legend ── */}
         <div className="px-4 py-3 border-t border-white/5 flex-shrink-0">
           <p className="text-[9px] text-slate-600 tracking-[3px] uppercase mb-2.5">Legend</p>
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
@@ -742,7 +675,7 @@ const ChainGraph = () => {
         </div>
       </aside>
 
-      {/* ══════════ DRAG HANDLE ══════════ */}
+      {/* DRAG HANDLE */}
       {sidebarOpen && (
         <div
           onMouseDown={onDragStart}
@@ -763,39 +696,30 @@ const ChainGraph = () => {
         </div>
       )}
 
-      {/* ══════════ MAIN GRAPH AREA ══════════ */}
+      {/* MAIN GRAPH */}
       <div className="relative flex-1 overflow-hidden">
-
-        {/* Sidebar toggle */}
         <button
           onClick={() => setSidebarOpen(o => !o)}
           className="absolute top-4 left-4 z-20 w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
           style={{
-            background:    "rgba(4,8,20,0.85)",
-            backdropFilter: "blur(12px)",
-            border:         "1px solid rgba(99,102,241,0.2)",
-            color:          "#818cf8",
+            background: "rgba(4,8,20,0.85)", backdropFilter: "blur(12px)",
+            border: "1px solid rgba(99,102,241,0.2)", color: "#818cf8",
           }}
         >
           {sidebarOpen ? "←" : "→"}
         </button>
 
-        {/* ── Active chain breadcrumb ── */}
         {activeChain && (
           <div
             className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2.5 rounded-2xl"
             style={{
-              background:    "rgba(4,8,20,0.88)",
-              backdropFilter: "blur(20px)",
-              border:         `1px solid ${activeCfg.color}30`,
-              boxShadow:      `0 0 30px ${activeCfg.color}14`,
-              maxWidth:        "65%",
+              background: "rgba(4,8,20,0.88)", backdropFilter: "blur(20px)",
+              border: `1px solid ${activeCfg.color}30`,
+              boxShadow: `0 0 30px ${activeCfg.color}14`, maxWidth: "65%",
             }}
           >
             <SevBadge sev={activeSev} />
-            {/* Scanline animation */}
-            <div className="relative overflow-hidden flex items-center gap-1 flex-wrap"
-              style={{ maxWidth: 480 }}>
+            <div className="relative overflow-hidden flex items-center gap-1 flex-wrap" style={{ maxWidth: 480 }}>
               {activeChain.map((id, i) => {
                 const norm  = normalizeName(id);
                 const label = (nodeMap[id]?.label || nodeMap[norm]?.label || norm || id).slice(0, 16);
@@ -813,7 +737,6 @@ const ChainGraph = () => {
           </div>
         )}
 
-        {/* ── Selected / Hover node detail panel ── */}
         {(selectedNode || hoverNode) && (() => {
           const node = selectedNode || hoverNode;
           const cfg2 = node.isVuln ? SEV[node.severity] : null;
@@ -821,12 +744,10 @@ const ChainGraph = () => {
             <div
               className="absolute bottom-6 left-6 z-20 px-5 py-4 rounded-2xl fade-in"
               style={{
-                background:    "rgba(4,8,20,0.93)",
-                backdropFilter: "blur(20px)",
-                border:         `1px solid ${node.isVuln ? cfg2.color + "50" : "rgba(99,102,241,0.25)"}`,
-                boxShadow:      node.isVuln ? `0 0 30px ${cfg2.color}18` : "0 0 20px rgba(99,102,241,0.1)",
-                minWidth:       200,
-                maxWidth:       300,
+                background: "rgba(4,8,20,0.93)", backdropFilter: "blur(20px)",
+                border: `1px solid ${node.isVuln ? cfg2.color + "50" : "rgba(99,102,241,0.25)"}`,
+                boxShadow: node.isVuln ? `0 0 30px ${cfg2.color}18` : "0 0 20px rgba(99,102,241,0.1)",
+                minWidth: 200, maxWidth: 300,
               }}
             >
               <p className="text-[9px] text-slate-500 tracking-[3px] uppercase mb-2">
@@ -839,24 +760,18 @@ const ChainGraph = () => {
               {node.isVuln && (
                 <div className="flex items-center gap-2 mt-1">
                   <SevBadge sev={node.severity} size="lg" />
-                  {cfg2.pulse && (
-                    <span className="text-[10px] text-slate-500">Active threat</span>
-                  )}
+                  {cfg2.pulse && <span className="text-[10px] text-slate-500">Active threat</span>}
                 </div>
               )}
             </div>
           );
         })()}
 
-        {/* ── Stats bar top-right ── */}
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
           {["CRITICAL","HIGH"].map(s => counts[s] > 0 && (
             <div key={s}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
-              style={{
-                background: SEV[s].color + "14",
-                border:     `1px solid ${SEV[s].color}40`,
-              }}
+              style={{ background: SEV[s].color + "14", border: `1px solid ${SEV[s].color}40` }}
             >
               <div className="w-2 h-2 rounded-full"
                 style={{ background: SEV[s].color, boxShadow: `0 0 8px ${SEV[s].color}`, animation: "pulseRing 2s infinite" }} />
@@ -871,19 +786,16 @@ const ChainGraph = () => {
           </div>
         </div>
 
-        {/* ── Empty state ── */}
         {!loading && chains.length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-10 gap-4 fade-in">
             <div className="text-6xl">✅</div>
-            <p className="text-slate-200 text-xl font-bold"
-              style={{ fontFamily: "'Syne', sans-serif" }}>
+            <p className="text-slate-200 text-xl font-bold" style={{ fontFamily: "'Syne', sans-serif" }}>
               No Vulnerability Chains
             </p>
             <p className="text-slate-500 text-sm">This repository has no dependency → vulnerability paths.</p>
           </div>
         )}
 
-        {/* ── Force Graph ── */}
         {graphData.nodes.length > 0 && (
           <ForceGraph2D
             ref={fgRef}
@@ -892,8 +804,7 @@ const ChainGraph = () => {
             d3AlphaDecay={0.012}
             d3VelocityDecay={0.32}
             cooldownTicks={150}
-            dagMode="lr"
-            dagLevelDistance={180}
+            // ✅ FIX: dagMode removed — cycles ke saath crash karta tha
             nodeCanvasObject={drawNode}
             nodeCanvasObjectMode={() => "replace"}
             linkCanvasObject={drawLink}
@@ -915,7 +826,6 @@ const ChainGraph = () => {
           />
         )}
 
-        {/* ── Bottom hint ── */}
         <div className="absolute bottom-4 right-4 z-10 flex items-center gap-4 text-[10px] text-slate-600">
           <span>Click node for details</span>
           <span>·</span>
