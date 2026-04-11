@@ -158,20 +158,31 @@ export default function Landing() {
         {/* NAVBAR */}
         <section className="sticky top-0 z-50 border-b border-cyan-500/10 bg-[#020817]/80 backdrop-blur-md">
           <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-10">
-            <motion.div
+
+                      <motion.div
               initial={{ opacity: 0, x: -16 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400/15 ring-1 ring-cyan-400/30 sm:h-10 sm:w-10">
-                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-cyan-400 sm:h-6 sm:w-6">
-                  <path d="M12 3L19 6V11C19 15.5 16.1 19.6 12 21C7.9 19.6 5 15.5 5 11V6L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-                  <path d="M9.5 11.5L11.2 13.2L14.8 9.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              {/* Bold Glowing Shield Box */}
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center rounded-xl bg-cyan-400/15 ring-1 ring-cyan-400/30">
+                <svg 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+                >
+                  <path d="M12 3L19 6V11C19 15.5 16.1 19.6 12 21C7.9 19.6 5 15.5 5 11V6L12 3Z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"/>
+                  <path d="M9.5 11.5L11.2 13.2L14.8 9.6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <p className="text-lg font-bold tracking-wide sm:text-xl">GraphGuardians</p>
+
+              {/* Bold Formatted Text (Now using an h1 tag so it gets sized properly!) */}
+              <h1 className="text-2xl sm:text-[28px] font-light tracking-tight text-white m-0 leading-none">
+                Graph<span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 tracking-normal">Guardians</span>
+              </h1>
             </motion.div>
+
 
             <motion.div
               initial={{ opacity: 0, y: -8 }}

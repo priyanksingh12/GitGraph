@@ -17,65 +17,162 @@ import socket from "../socket";
 const SCAN = { IDLE: "idle", SCANNING: "scanning", READY: "ready" };
 
 /* ─── Canvas background ─── */
-const CanvasBg = ({ opacity = 0.55 }) => (
-  <canvas
-    ref={(canvas) => {
-      if (!canvas || canvas._initialized) return;
-      canvas._initialized = true;
-      const ctx = canvas.getContext("2d");
-      let animId;
-      const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-      resize();
-      window.addEventListener("resize", resize);
-      const nodes = Array.from({ length: 55 }, () => ({
-        x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.38, vy: (Math.random() - 0.5) * 0.38,
-        r: Math.random() * 2 + 1, highlight: Math.random() < 0.14,
-        phase: Math.random() * Math.PI * 2,
-      }));
-      const draw = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const t = performance.now() / 1000;
-        nodes.forEach(n => {
-          n.x += n.vx; n.y += n.vy;
-          if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
-          if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
-        });
-        for (let i = 0; i < nodes.length; i++)
-          for (let j = i + 1; j < nodes.length; j++) {
-            const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
-            const d = Math.sqrt(dx*dx+dy*dy);
-            if (d < 140) {
-              const fade = 1 - d/140, sp = nodes[i].highlight || nodes[j].highlight;
-              ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y);
-              ctx.strokeStyle = sp ? `rgba(34,211,238,${fade*0.5})` : `rgba(96,165,250,${fade*0.18})`;
-              ctx.lineWidth = sp ? 0.85 : 0.5; ctx.stroke();
-            }
+/* ─── Canvas background ─── */
+const CanvasBg = ({ opacity = 0.55 }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let animId;
+
+    let mouse = { x: -1000, y: -1000 };
+
+    const handleMouseMove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    const handleMouseLeave = () => { mouse.x = -1000; mouse.y = -1000; };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseout", handleMouseLeave);
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const NODE_COUNT = 75; // Increased density for premium feel
+    const CONNECT_DIST = 140;
+    const INTERACT_DIST = 200;
+
+    const nodes = Array.from({ length: NODE_COUNT }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      r: Math.random() * 2.5 + 1.2,
+      highlight: Math.random() < 0.15,
+      phase: Math.random() * Math.PI * 2,
+    }));
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const t = performance.now() / 1000;
+
+      // 1. Move nodes
+      nodes.forEach(n => {
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+      });
+
+      // 2. Draw standard connections
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < CONNECT_DIST) {
+            const fade = 1 - dist / CONNECT_DIST;
+            const isSpecial = nodes[i].highlight || nodes[j].highlight;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.strokeStyle = isSpecial 
+                ? `rgba(34,211,238,${fade * 0.6})` 
+                : `rgba(96,165,250,${fade * 0.25})`;
+            ctx.lineWidth = isSpecial ? 1 : 0.5;
+            ctx.stroke();
           }
-        nodes.forEach(n => {
-          const pulse = 0.5 + 0.5*Math.sin(t*1.6+n.phase);
-          if (n.highlight) {
-            const g = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r*7);
-            g.addColorStop(0,`rgba(34,211,238,${0.2*pulse})`); g.addColorStop(1,"rgba(34,211,238,0)");
-            ctx.beginPath(); ctx.arc(n.x,n.y,n.r*7,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
-            ctx.beginPath(); ctx.arc(n.x,n.y,n.r+pulse*0.7,0,Math.PI*2);
-            ctx.fillStyle=`rgba(34,211,238,${0.7+pulse*0.3})`; ctx.fill();
-          } else {
-            ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
-            ctx.fillStyle=`rgba(96,165,250,${0.28+pulse*0.1})`; ctx.fill();
+        }
+      }
+
+      // 3. Mouse Interaction (Magnetic Pull & Beams)
+      nodes.forEach(n => {
+        const dx = n.x - mouse.x;
+        const dy = n.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < INTERACT_DIST) {
+          const fade = 1 - dist / INTERACT_DIST;
+          
+          // Draw connection beam to cursor
+          ctx.beginPath();
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.strokeStyle = `rgba(34,211,238,${fade * 0.8})`;
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+
+          // Magnetic pull towards cursor
+          n.x -= dx * 0.005;
+          n.y -= dy * 0.005;
+        }
+      });
+
+      // 4. Rendering individual nodes
+      nodes.forEach(n => {
+        const pulse = 0.5 + 0.5 * Math.sin(t * 2 + n.phase);
+        
+        if (n.highlight) {
+          const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 6);
+          g.addColorStop(0, `rgba(34,211,238,${0.3 * pulse})`);
+          g.addColorStop(1, "rgba(34,211,238,0)");
+          ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 6, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+          
+          ctx.beginPath(); ctx.arc(n.x, n.y, n.r + pulse * 1, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(34,211,238,${0.8 + pulse * 0.2})`; ctx.fill();
+        } else {
+          ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+          
+          // Highlight standard blue nodes when near mouse
+          const dx = n.x - mouse.x;
+          const dy = n.y - mouse.y;
+          const distToMouse = Math.sqrt(dx * dx + dy * dy);
+          let alpha = 0.35 + pulse * 0.15;
+          
+          if (distToMouse < INTERACT_DIST) {
+             alpha += (1 - distToMouse / INTERACT_DIST) * 0.5;
           }
-        });
-        animId = requestAnimationFrame(draw);
-      };
-      draw();
-      new MutationObserver(() => {
-        if (!document.contains(canvas)) { cancelAnimationFrame(animId); window.removeEventListener("resize", resize); }
-      }).observe(document.body, { childList: true, subtree: true });
-    }}
-    className="absolute inset-0 pointer-events-none"
-    style={{ opacity }}
-  />
-);
+
+          ctx.fillStyle = `rgba(96,165,250,${alpha})`; ctx.fill();
+        }
+      });
+
+      animId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseout", handleMouseLeave);
+    };
+  }, []);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-0">
+      {/* Ambient glowing deep background spheres */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-900/20 blur-[120px]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/20 blur-[120px]" />
+      
+      {/* Cyber Grid mask */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom_right,black,transparent)] opacity-50" />
+      
+      {/* Animated Canvas */}
+      <canvas ref={canvasRef} className="w-full h-full block" style={{ opacity }} />
+    </div>
+  );
+};
 
 /* ─── Severity badge ─── */
 const SevBadge = ({ sev }) => {
@@ -104,73 +201,76 @@ const StatCard = ({ value, label, accent, icon: Icon, sub }) => (
 /* ─── Dummy AI insights generator (deterministic per repo) ─── */
 const INSIGHT_POOLS = [
   {
-    summary: "Static analysis reveals several high-risk transitive dependencies with known exploit chains. Immediate patching is advised for production environments.",
-    topAction: "Upgrade all CRITICAL severity packages before next deployment.",
-    riskLevel: "CRITICAL",
-    quickFixes: [
-      "Run `npm audit fix --force` to auto-patch compatible vulnerabilities",
-      "Replace deprecated crypto packages with maintained alternatives",
-      "Pin dependency versions in package-lock.json to prevent drift",
-    ],
-    topIssues: [
-      { package: "lodash", severity: "HIGH",     why: "Prototype pollution via merge functions can lead to RCE.",     fix: "npm install lodash@4.17.21" },
-      { package: "axios",  severity: "MEDIUM",   why: "SSRF vulnerability allows internal network probing.",           fix: "npm install axios@1.6.0" },
-      { package: "jsonwebtoken", severity: "CRITICAL", why: "Algorithm confusion attack allows token forgery.",       fix: "npm install jsonwebtoken@9.0.0" },
-    ],
-  },
-  {
-    summary: "Dependency graph shows circular dependency chains amplifying attack surface. Several packages expose unvalidated inputs on public endpoints.",
-    topAction: "Audit all packages flagged MEDIUM or above and enforce input validation middleware.",
+    summary:
+      "Your Express 5.x backend uses JWT authentication and MongoDB via Mongoose. Static analysis flags jsonwebtoken algorithm confusion risks and bcryptjs as a less hardened alternative to argon2. Nodemailer email endpoints may expose SSRF if user input is unsanitized.",
+    topAction:
+      "Audit JWT signing options to enforce algorithm explicitly, and add rate-limiting to auth routes.",
     riskLevel: "HIGH",
     quickFixes: [
-      "Add helmet.js to harden HTTP headers against XSS and clickjacking",
-      "Replace `eval()` usages with safer JSON.parse patterns",
-      "Enable Snyk or Dependabot for automated PR-based patch alerts",
+      "Add `algorithms: ['HS256']` explicitly when calling `jwt.verify()` to prevent algorithm confusion attacks",
+      "Install `express-rate-limit` and apply it to `/login` and `/register` routes",
+      "Sanitize all email recipient fields in Nodemailer to block header injection attacks",
     ],
     topIssues: [
-      { package: "express",     severity: "MEDIUM",   why: "Missing rate-limiting allows brute-force amplification.",  fix: "npm install express-rate-limit" },
-      { package: "multer",      severity: "HIGH",     why: "Unrestricted file upload allows malicious file execution.", fix: "npm install multer@1.4.5-lts.1" },
-      { package: "node-fetch",  severity: "CRITICAL", why: "SSRF via unvalidated URLs in fetch calls.",               fix: "npm install node-fetch@3.3.2" },
+      {
+        package: "jsonwebtoken",
+        severity: "HIGH",
+        why: "Algorithm confusion attack — if `algorithms` is not pinned in verify(), attacker can forge tokens.",
+        fix: "Explicitly pass `{ algorithms: ['HS256'] }` to jwt.verify()",
+      },
+      {
+        package: "bcryptjs",
+        severity: "MEDIUM",
+        why: "bcryptjs is a pure-JS port with slower security updates. argon2 is the modern recommended alternative.",
+        fix: "npm install argon2",
+      },
+      {
+        package: "nodemailer",
+        severity: "MEDIUM",
+        why: "Unsanitized `to` or `subject` fields can lead to email header injection.",
+        fix: "Validate all email inputs with express-validator before passing to nodemailer",
+      },
     ],
   },
   {
-    summary: "Low overall risk score but 3 packages have reached end-of-life and no longer receive security patches. Proactive migration reduces long-term exposure.",
-    topAction: "Migrate EOL packages to actively maintained forks within the next sprint.",
+    summary:
+      "Mongoose 8.x with MongoDB is generally stable, but missing input validation middleware on routes can expose injection vectors. express-validator is present but may not be applied consistently across all endpoints.",
+    topAction:
+      "Ensure express-validator middleware is applied to every route that accepts user input, not just auth routes.",
     riskLevel: "MEDIUM",
     quickFixes: [
-      "Replace `request` (deprecated) with `got` or `axios`",
-      "Update `moment.js` to `date-fns` or `dayjs` for smaller, maintained alternative",
-      "Switch from `bcrypt` to `argon2` for stronger password hashing",
+      "Add `mongoSanitize` middleware (mongo-sanitize package) to strip `$` and `.` from request bodies",
+      "Set mongoose `strictQuery: true` to prevent unintended query behavior",
+      "Enable CORS origin whitelist instead of wildcard `*` in production",
     ],
     topIssues: [
-      { package: "moment",    severity: "LOW",    why: "EOL package — no future security patches will be issued.",    fix: "npm install dayjs" },
-      { package: "request",   severity: "MEDIUM", why: "Deprecated with known open vulnerabilities, no patch path.",  fix: "npm install got@12.0.0" },
-      { package: "minimist",  severity: "HIGH",   why: "Prototype pollution allows object property injection.",        fix: "npm install minimist@1.2.8" },
-    ],
-  },
-  {
-    summary: "Supply chain risk detected — 4 dependencies pull from unverified registries. Lock files are inconsistent across environments, increasing compromise risk.",
-    topAction: "Enforce `npm ci` in CI/CD pipeline and add `.npmrc` registry pinning.",
-    riskLevel: "HIGH",
-    quickFixes: [
-      "Add `package-lock.json` integrity checks to your CI pipeline",
-      "Use `npm audit` as a pre-commit hook via Husky",
-      "Review all packages with <100 weekly downloads for typosquatting risk",
-    ],
-    topIssues: [
-      { package: "serialize-javascript", severity: "HIGH",     why: "XSS via unsafe serialization of user-controlled data.",    fix: "npm install serialize-javascript@6.0.1" },
-      { package: "tough-cookie",         severity: "CRITICAL", why: "Prototype pollution leading to session hijacking risk.",    fix: "npm install tough-cookie@4.1.3" },
-      { package: "semver",               severity: "MEDIUM",   why: "ReDoS attack via malformed version strings.",              fix: "npm install semver@7.5.4" },
+      {
+        package: "mongoose",
+        severity: "LOW",
+        why: "Without `mongo-sanitize`, user-supplied query params can include MongoDB operators.",
+        fix: "npm install express-mongo-sanitize",
+      },
+      {
+        package: "cors",
+        severity: "MEDIUM",
+        why: "Default CORS wildcard `*` allows any origin to call your API in production.",
+        fix: "Set `origin: 'https://yourdomain.com'` in cors() options",
+      },
+      {
+        package: "dotenv",
+        severity: "LOW",
+        why: "Ensure `.env` is in `.gitignore` — leaked JWT_SECRET or DB credentials is a critical exposure.",
+        fix: "Audit .gitignore and rotate any secrets if .env was ever committed",
+      },
     ],
   },
 ];
-
 const getDummyInsights = (repoId, repoName, vulnCounts = {}) => {
   // Deterministic index based on repo name/id characters
   const seed = (repoName || repoId || "default")
     .split("")
     .reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const pool = INSIGHT_POOLS[seed % INSIGHT_POOLS.length];
+  const pool = INSIGHT_POOLS[Math.floor(Math.random() * INSIGHT_POOLS.length)];
 
   // Override riskLevel based on real vuln data if available
   const hasCritical = (vulnCounts.CRITICAL || 0) > 0;
